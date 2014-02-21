@@ -3,7 +3,6 @@ package be.appfoundry.promtius.apple;
 import be.appfoundry.promtius.ClientToken;
 import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
-import be.appfoundry.promtius.ClientTokenType;
 import be.appfoundry.promtius.PushPayload;
 import be.appfoundry.promtius.Pusher;
 import com.notnoop.apns.APNS;
@@ -19,40 +18,41 @@ import java.util.Map;
 /**
  * @author Mike Seghers
  */
-public class ApplePushNotificationServicePusher implements Pusher {
+public class ApplePushNotificationServicePusher<P> implements Pusher<P> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplePushNotificationServicePusher.class);
 
     private final ApnsService apnsService;
-    private final ClientTokenService<String> clientTokenService;
-    private final ClientTokenFactory<String> clientTokenFactory;
-    private final ClientTokenType clientTokenType;
+    private final ClientTokenService<String, P> clientTokenService;
+    private final ClientTokenFactory<String, P> clientTokenFactory;
+    private final P platform;
 
-    public ApplePushNotificationServicePusher(ApnsService apnsService, ClientTokenService<String> clientTokenService, ClientTokenFactory<String> clientTokenFactory, final ClientTokenType clientTokenType) {
+    public ApplePushNotificationServicePusher(ApnsService apnsService, ClientTokenService<String, P> clientTokenService, ClientTokenFactory<String, P> clientTokenFactory,
+                                              final P platform) {
         this.apnsService = apnsService;
         this.clientTokenService = clientTokenService;
         this.clientTokenFactory = clientTokenFactory;
-        this.clientTokenType = clientTokenType;
+        this.platform = platform;
     }
 
     @Override
     public void sendPush(final PushPayload payload) {
-        LOGGER.info("sending payload ({}) to APNS", payload);
-        Map<String,Date> inactiveDevices = apnsService.getInactiveDevices();
+        LOGGER.info("Sending payload ({}) to APNs", payload);
+        Map<String, Date> inactiveDevices = apnsService.getInactiveDevices();
         LOGGER.debug("Unregistering device tokens ({})", inactiveDevices);
-        for(String token : inactiveDevices.keySet()) {
-            clientTokenService.unregisterClientToken(clientTokenFactory.createClientToken(token, clientTokenType));
+        for (String token : inactiveDevices.keySet()) {
+            clientTokenService.unregisterClientToken(clientTokenFactory.createClientToken(token, platform));
         }
 
-        List<ClientToken<String>> tokens = clientTokenService.findClientTokensForOperatingSystem(clientTokenType);
+        List<ClientToken<String, P>> tokens = clientTokenService.findClientTokensForOperatingSystem(platform);
         List<String> tokenIds = new ArrayList<String>(tokens.size());
-        LOGGER.info("Pushing with tokens ({})", tokenIds);
-        for (ClientToken<String> token : tokens) {
+        LOGGER.debug("Pushing with tokens ({})", tokenIds);
+        for (ClientToken<String, P> token : tokens) {
             tokenIds.add(token.getToken());
         }
 
         String payloadAsString = APNS.newPayload().alertBody(payload.getMessage()).build();
         apnsService.push(tokenIds, payloadAsString);
-        LOGGER.info("APNS push finished", payload);
+        LOGGER.info("APNs push finished", payload);
     }
 }

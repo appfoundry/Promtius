@@ -46,10 +46,8 @@ public class ParallelPushAggregatorTest {
     public void test_sendPush() throws Exception {
         PushPayload payload = new PushPayload("message");
         pushAggregator.sendPush(payload, tracker);
-        waitUntillAgregatorHasFinishedAndVerify(payload);
+        waitUntillAgregatorHasFinishedAndVerify(payload, 500);
     }
-
-
 
     @Test
     public void test_sendPush_failure() throws Exception {
@@ -57,12 +55,19 @@ public class ParallelPushAggregatorTest {
         doThrow(new IllegalStateException()).when(pusherA).sendPush(payload);
         doThrow(new IllegalStateException()).when(pusherB).sendPush(payload);
         pushAggregator.sendPush(payload, tracker);
-        waitUntillAgregatorHasFinishedAndVerify(payload);
+        waitUntillAgregatorHasFinishedAndVerify(payload, 500);
     }
 
-    private void waitUntillAgregatorHasFinishedAndVerify(PushPayload payload) throws InterruptedException {
-        while (!pushFinished) {
-            Thread.sleep(1000);
+    private void waitUntillAgregatorHasFinishedAndVerify(PushPayload payload, long timeout) throws InterruptedException {
+        long start = System.currentTimeMillis();
+        long timePassed = 0;
+        while (!pushFinished && timePassed < timeout) {
+            Thread.sleep(100);
+            timePassed = System.currentTimeMillis() - start;
+        }
+
+        if (!pushFinished) {
+            fail("Aggregator didn't finish within timeout.");
         }
 
         verify(pusherA).sendPush(payload);

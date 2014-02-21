@@ -16,10 +16,6 @@ import java.util.concurrent.Executors;
 public class ParallelPushAggregator implements PushAggregator {
     private Set<Pusher> pusherRegistry;
 
-    public ParallelPushAggregator() {
-        this.pusherRegistry = new HashSet<Pusher>();
-    }
-
     public ParallelPushAggregator(Set<Pusher> pusherRegistry) {
         this.pusherRegistry = new HashSet<Pusher>(pusherRegistry);
     }
@@ -27,23 +23,30 @@ public class ParallelPushAggregator implements PushAggregator {
     @Override
     public void sendPush(final PushPayload payload, final PusherAggregatorTracker tracker) {
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(pusherRegistry.size()));
-
-        PusherAggregatorTaskCallback callback = new PusherAggregatorTaskCallback(tracker, pusherRegistry.size());
-        for (final Pusher p : pusherRegistry) {
-            ListenableFutureTask<Boolean> task = ListenableFutureTask.create(new Runnable() {
-                @Override
-                public void run() {
-                    p.sendPush(payload);
-                }
-            }, Boolean.TRUE);
-            Futures.addCallback(task, callback);
-
-            service.execute(task);
-        }
+        createFutureTaskForEachPusherToSendPayload(payload, tracker, service);
         service.shutdown();
     }
 
-    public static final class PusherAggregatorTaskCallback implements FutureCallback<Boolean> {
+    private void createFutureTaskForEachPusherToSendPayload(final PushPayload payload, final PusherAggregatorTracker tracker, final ListeningExecutorService service) {
+        PusherAggregatorTaskCallback callback = new PusherAggregatorTaskCallback(tracker, pusherRegistry.size());
+        for (final Pusher p : pusherRegistry) {
+            createListenableTaskAndExecuteForPusher(payload, service, callback, p);
+        }
+    }
+
+    private void createListenableTaskAndExecuteForPusher(final PushPayload payload, final ListeningExecutorService service, final PusherAggregatorTaskCallback callback,
+                                                         final Pusher p) {
+        ListenableFutureTask<Boolean> task = ListenableFutureTask.create(new Runnable() {
+            @Override
+            public void run() {
+                p.sendPush(payload);
+            }
+        }, Boolean.TRUE);
+        Futures.addCallback(task, callback);
+        service.execute(task);
+    }
+
+    private static final class PusherAggregatorTaskCallback implements FutureCallback<Boolean> {
         private int taskCount;
         private int successCount;
         private int failureCount;

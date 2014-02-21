@@ -3,7 +3,6 @@ package be.appfoundry.promtius.google;
 import be.appfoundry.promtius.ClientToken;
 import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
-import be.appfoundry.promtius.ClientTokenType;
 import be.appfoundry.promtius.exception.PushFailedException;
 import be.appfoundry.promtius.PushPayload;
 import be.appfoundry.promtius.Pusher;
@@ -17,33 +16,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * @param <P> The client platform identifier type, identifying the platform to which the pusher pushes messages.
  * @author Mike Seghers
  */
-public class GoogleCloudMessagingPusher implements Pusher {
+public final class GoogleCloudMessagingPusher<P> implements Pusher<P> {
 
     public static final String COLLAPSE_KEY = "kolepski";
     public static final int MAX_MULTICAST_SIZE = 1000;
-    private GoogleSenderWrapper senderWrapper;
-    private ClientTokenService<String> clientTokenService;
-    private final ClientTokenType clientTokenType;
-    private ClientTokenFactory<String> clientTokenFactory;
+    private final GoogleSenderWrapper senderWrapper;
+    private final ClientTokenService<String, P> clientTokenService;
+    private final P platform;
+    private final ClientTokenFactory<String, P> clientTokenFactory;
 
-    public GoogleCloudMessagingPusher(final GoogleSenderWrapper senderWrapper, final ClientTokenService infoService, final ClientTokenType clientTokenType) {
+    public GoogleCloudMessagingPusher(final GoogleSenderWrapper senderWrapper, final ClientTokenService infoService, final ClientTokenFactory<String, P> clientTokenFactory, final P platform) {
         this.senderWrapper = senderWrapper;
         this.clientTokenService = infoService;
-        this.clientTokenType = clientTokenType;
+        this.clientTokenFactory = clientTokenFactory;
+        this.platform = platform;
     }
 
     @Override
     public void sendPush(PushPayload payload) {
         //payload to message, and send via sender
-        List<ClientToken<String>> tokens = clientTokenService.findClientTokensForOperatingSystem(clientTokenType);
+        List<ClientToken<String, P>> tokens = clientTokenService.findClientTokensForOperatingSystem(platform);
 
         List<String> partialDeviceIds = new ArrayList<String>();
         int counter = 0;
         Message message = new Message.Builder().addData("message", payload.getMessage()).collapseKey(COLLAPSE_KEY).build();
 
-        for (ClientToken<String> token : tokens) {
+        for (ClientToken<String, P> token : tokens) {
             partialDeviceIds.add(token.getToken());
             counter++;
             if (counter == MAX_MULTICAST_SIZE) {
@@ -90,7 +91,7 @@ public class GoogleCloudMessagingPusher implements Pusher {
     private void checkError(String regId, Result result) {
         String err = result.getErrorCodeName();
         if (Constants.ERROR_NOT_REGISTERED.equals(err)) {
-            clientTokenService.unregisterClientToken(clientTokenFactory.createClientToken(regId, clientTokenType));
+            clientTokenService.unregisterClientToken(clientTokenFactory.createClientToken(regId, platform));
         }
     }
 
@@ -102,8 +103,8 @@ public class GoogleCloudMessagingPusher implements Pusher {
     }
 
     private void replaceDeviceId(String oldId, String newId) {
-        clientTokenService.unregisterClientToken(clientTokenFactory.createClientToken(oldId, clientTokenType));
-        clientTokenService.registerClientToken(clientTokenFactory.createClientToken(newId, clientTokenType));
+        clientTokenService.unregisterClientToken(clientTokenFactory.createClientToken(oldId, platform));
+        clientTokenService.registerClientToken(clientTokenFactory.createClientToken(newId, platform));
     }
 
 

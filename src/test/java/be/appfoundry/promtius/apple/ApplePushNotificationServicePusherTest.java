@@ -4,7 +4,6 @@ package be.appfoundry.promtius.apple;
 import be.appfoundry.promtius.ClientToken;
 import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
-import be.appfoundry.promtius.ClientTokenType;
 import be.appfoundry.promtius.PushPayload;
 import com.notnoop.apns.ApnsService;
 import org.junit.Before;
@@ -36,28 +35,28 @@ public class ApplePushNotificationServicePusherTest {
     private ApnsService apnsService;
 
     @Mock
-    private ClientTokenService<String> clientTokenService;
+    private ClientTokenService<String, String> clientTokenService;
     @Mock
-    private ClientTokenFactory<String> clientTokenFactory;
+    private ClientTokenFactory<String, String> clientTokenFactory;
+
+    private static final String TEST_PLATFORM = "iOS";
     @Mock
-    private ClientTokenType clientTokenType;
+    private ClientToken<String, String> tokenA;
     @Mock
-    private ClientToken<String> tokenA;
-    @Mock
-    private ClientToken<String> tokenB;
+    private ClientToken<String, String> tokenB;
 
     private ApplePushNotificationServicePusher pusher;
 
     @Before
     public void setUp() throws Exception {
-        pusher = new ApplePushNotificationServicePusher(apnsService, clientTokenService, clientTokenFactory, clientTokenType);
+        pusher = new ApplePushNotificationServicePusher(apnsService, clientTokenService, clientTokenFactory, TEST_PLATFORM);
     }
 
     @Test
     public void test_sendPush() throws Exception {
         PushPayload payload = new PushPayload("message");
-        List<ClientToken<String>> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(clientTokenType)).thenReturn(tokens);
+        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
         when(tokenA.getToken()).thenReturn("token1");
         when(tokenB.getToken()).thenReturn("token2");
 
@@ -75,8 +74,8 @@ public class ApplePushNotificationServicePusherTest {
         inactive.put("token1", new Date());
         inactive.put("token2", new Date());
         when(apnsService.getInactiveDevices()).thenReturn(inactive);
-        when(clientTokenFactory.createClientToken("token1", clientTokenType)).thenReturn(tokenA);
-        when(clientTokenFactory.createClientToken("token2", clientTokenType)).thenReturn(tokenB);
+        when(clientTokenFactory.createClientToken("token1", TEST_PLATFORM)).thenReturn(tokenA);
+        when(clientTokenFactory.createClientToken("token2", TEST_PLATFORM)).thenReturn(tokenB);
 
         PushPayload payload = new PushPayload("message");
         pusher.sendPush(payload);
@@ -84,7 +83,7 @@ public class ApplePushNotificationServicePusherTest {
         ArgumentCaptor<ClientToken> pushTokenCaptor = ArgumentCaptor.forClass(ClientToken.class);
         verify(clientTokenService, times(2)).unregisterClientToken(pushTokenCaptor.capture());
         List<ClientToken> allValues = pushTokenCaptor.getAllValues();
-        assertThat((ClientToken<String>) allValues.get(0), is(tokenA));
-        assertThat((ClientToken<String>) allValues.get(1), is(tokenB));
+        assertThat((ClientToken<String, String>) allValues.get(0), is(tokenA));
+        assertThat((ClientToken<String, String>) allValues.get(1), is(tokenB));
     }
 }

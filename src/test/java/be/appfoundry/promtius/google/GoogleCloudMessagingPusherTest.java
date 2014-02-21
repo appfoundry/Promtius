@@ -1,8 +1,8 @@
 package be.appfoundry.promtius.google;
 
 import be.appfoundry.promtius.ClientToken;
+import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
-import be.appfoundry.promtius.ClientTokenType;
 import be.appfoundry.promtius.PushPayload;
 import be.appfoundry.promtius.exception.PushFailedException;
 import com.google.android.gcm.server.Message;
@@ -47,23 +47,24 @@ public class GoogleCloudMessagingPusherTest {
 
     @Mock
     private GoogleSenderWrapper wrapper;
+    private static final String TEST_PLATFORM = "Android";
     @Mock
-    private ClientTokenType clientTokenType;
+    private ClientToken<String, String> tokenA;
     @Mock
-    private ClientToken<String> tokenA;
+    private ClientToken<String, String> tokenB;
     @Mock
-    private ClientToken<String> tokenB;
+    private ClientTokenFactory<String, String> clientTokenFactory;
 
     @Before
     public void setUp() throws Exception {
-        pusher = new GoogleCloudMessagingPusher(wrapper, clientTokenService, clientTokenType);
+        pusher = new GoogleCloudMessagingPusher(wrapper, clientTokenService, clientTokenFactory, TEST_PLATFORM);
     }
 
     @Test
     public void test_sendPush() throws Exception {
         PushPayload payload = new PushPayload("message");
-        List<ClientToken<String>> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(clientTokenType)).thenReturn(tokens);
+        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
         when(tokenA.getToken()).thenReturn("token1");
         when(tokenB.getToken()).thenReturn("token2");
         pusher.sendPush(payload);
@@ -85,8 +86,8 @@ public class GoogleCloudMessagingPusherTest {
     @Test(expected = PushFailedException.class)
     public void test_sendPush_onIOException() throws Exception {
         PushPayload payload = new PushPayload("message");
-        List<ClientToken<String>> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(clientTokenType)).thenReturn(tokens);
+        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
         when(wrapper.send(Mockito.any(Message.class), anyList(), anyInt())).thenThrow(new IOException());
 
         pusher.sendPush(payload);
@@ -94,11 +95,11 @@ public class GoogleCloudMessagingPusherTest {
 
     @Test
     public void test_multicastSend() throws Exception {
-        List<ClientToken<String>> tokens = new ArrayList<ClientToken<String>>(2500);
+        List<ClientToken<String, String>> tokens = new ArrayList<ClientToken<String, String>>(2500);
         for (int i = 0; i < 2500; i++) {
             tokens.add(tokenA);
         }
-        when(clientTokenService.findClientTokensForOperatingSystem(clientTokenType)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
 
         pusher.sendPush(new PushPayload("message"));
 
@@ -130,7 +131,7 @@ public class GoogleCloudMessagingPusherTest {
         verify(clientTokenService).registerClientToken(tokenCaptor.capture());
         ClientToken savedToken = tokenCaptor.getValue();
         assertThat((String) savedToken.getToken(), is("newToken"));
-        assertThat(savedToken.getClientTokenType(), is(clientTokenType));*/
+        assertThat(savedToken.getPlatform(), is(platform));*/
     }
 
     @Test

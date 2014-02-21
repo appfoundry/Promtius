@@ -1,9 +1,5 @@
 package be.appfoundry.promtius.exception;
 
-import be.appfoundry.promtius.exception.PromtiusException;
-
-import java.io.IOException;
-
 /**
  * @author Mike Seghers
  */

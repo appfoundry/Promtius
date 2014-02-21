@@ -8,6 +8,16 @@
     <artifactId>promtius</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <properties>
+        <guava.version>16.0.1</guava.version>
+        <gcm-server.version>1.0.2</gcm-server.version>
+        <apns.version>0.2.3</apns.version>
+        <slf4j.version>1.7.6</slf4j.version>
+        <junit.version>4.11</junit.version>
+        <mockito.version>1.9.5</mockito.version>
+        <hamcrest.version>1.3</hamcrest.version>
+    </properties>
+
 
     <name>Promtius messaging platform</name>
 
@@ -42,46 +52,46 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>16.0.1</version>
+            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ganyo</groupId>
             <artifactId>gcm-server</artifactId>
-            <version>1.0.2</version>
+            <version>${gcm-server.version}</version>
         </dependency>
         <dependency>
             <groupId>com.notnoop.apns</groupId>
             <artifactId>apns</artifactId>
-            <version>0.2.3</version>
+            <version>${apns.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.6</version>
+            <version>${slf4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>1.9.5</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
-            <version>1.3</version>
+            <version>${hamcrest.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
-            <version>1.3</version>
+            <version>${hamcrest.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

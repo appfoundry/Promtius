@@ -22,27 +22,26 @@ import java.util.Map;
 public class ApnsServiceFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApnsServiceFactory.class);
 
-    public static ApnsService getSanboxApnsService(String certPath, String certPass) {
+    public static ApnsService getSanboxApnsService(final String certPath, final String certPass) {
         return internalGetApnsService(certPath, certPass, true);
     }
 
-    public static ApnsService getProductionApnsService(String certPath, String certPass) {
+    public static ApnsService getProductionApnsService(final String certPath, final String certPass) {
         return internalGetApnsService(certPath, certPass, false);
     }
 
-    private static ApnsService internalGetApnsService(String certPath, String certPass, boolean sandbox) {
+    private static ApnsService internalGetApnsService(final String certPath, final String certPass, final boolean sandbox) {
         ApnsService service;
         if (Strings.isNullOrEmpty(certPass)) {
-            service = fallBackToNoopService();
+            service = fallBackToNoOpService();
         } else {
-            LOGGER.info("APNS configuration seems ok, setting up APNS.");
-            URL resource = ApplePushNotificationServicePusher.class.getResource(certPath);
-            ApnsServiceBuilder apnsServiceBuilder = APNS.newService().withCert(resource.getPath(), certPass);
+            LOGGER.info("APNs configuration seems ok, setting up APNs.");
+            ApnsServiceBuilder apnsServiceBuilder = getApnsServiceBuilderWithCertInfo(certPath, certPass);
             if (sandbox) {
-                LOGGER.warn("APNS setup for sandbox");
+                LOGGER.info("APNs setup for sandbox");
                 apnsServiceBuilder.withSandboxDestination();
             } else {
-                LOGGER.warn("APNS setup for production");
+                LOGGER.info("APNs setup for production");
                 apnsServiceBuilder.withProductionDestination();
             }
             service = apnsServiceBuilder.build();
@@ -50,60 +49,66 @@ public class ApnsServiceFactory {
         return service;
     }
 
-    private static ApnsService fallBackToNoopService() {
-        LOGGER.warn("APNS Service not configured properly, falling back to NO-OP service, your push notifications will not be send to Apple!");
+    private static ApnsServiceBuilder getApnsServiceBuilderWithCertInfo(final String certPath, final String certPass) {
+        URL resource = ApplePushNotificationServicePusher.class.getResource(certPath);
+        return APNS.newService().withCert(resource.getPath(), certPass);
+    }
+
+    private static ApnsService fallBackToNoOpService() {
+        LOGGER.warn("APNs Service not configured properly, falling back to NO-OP service, your push notifications will not be send to Apple!");
         return new ApnsService() {
             @Override
             public ApnsNotification push(String deviceToken, String payload) throws NetworkIOException {
-                LOGGER.warn("Push will not be send, APNS not configured properly");
-                return null;
+                return logWarningAndReturn(null);
             }
 
             @Override
             public EnhancedApnsNotification push(String deviceToken, String payload, Date expiry) throws NetworkIOException {
-                LOGGER.warn("Push will not be send, APNS not configured properly");
-                return null;
+                return logWarningAndReturn(null);
             }
 
             @Override
             public ApnsNotification push(byte[] deviceToken, byte[] payload) throws NetworkIOException {
-                LOGGER.warn("Push will not be send, APNS not configured properly");
-                return null;
+                return logWarningAndReturn(null);
             }
 
             @Override
             public EnhancedApnsNotification push(byte[] deviceToken, byte[] payload, int expiry) throws NetworkIOException {
-                LOGGER.warn("Push will not be send, APNS not configured properly");
-                return null;
+                return logWarningAndReturn(null);
             }
 
             @Override
             public Collection<? extends ApnsNotification> push(Collection<String> deviceTokens, String payload) throws NetworkIOException {
-                LOGGER.warn("Push will not be send, APNS not configured properly");
-                return Collections.emptyList();
+                return logWarningAndReturn(Collections.<ApnsNotification>emptyList());
             }
 
             @Override
             public Collection<? extends EnhancedApnsNotification> push(Collection<String> deviceTokens, String payload, Date expiry) throws NetworkIOException {
-                LOGGER.warn("Push will not be send, APNS not configured properly");
-                return Collections.emptyList();
+                return logWarningAndReturn(Collections.<EnhancedApnsNotification>emptyList());
             }
 
             @Override
             public Collection<? extends ApnsNotification> push(Collection<byte[]> deviceTokens, byte[] payload) throws NetworkIOException {
-                LOGGER.warn("Push will not be send, APNS not configured properly");
-                return Collections.emptyList();
+                return logWarningAndReturn(Collections.<ApnsNotification>emptyList());
             }
 
             @Override
             public Collection<? extends EnhancedApnsNotification> push(Collection<byte[]> deviceTokens, byte[] payload, int expiry) throws NetworkIOException {
-                LOGGER.warn("Push will not be send, APNS not configured properly");
-                return Collections.emptyList();
+                return logWarningAndReturn(Collections.<EnhancedApnsNotification>emptyList());
             }
 
             @Override
             public void push(ApnsNotification message) throws NetworkIOException {
-                LOGGER.warn("Push will not be send, APNS not configured properly");
+                logWarning();
+            }
+
+            private void logWarning() {
+                LOGGER.warn("Push will not be send, APNs not configured properly");
+            }
+
+            private <T> T logWarningAndReturn(T valueToReturn) {
+                logWarning();
+                return valueToReturn;
             }
 
             @Override
@@ -116,13 +121,13 @@ public class ApnsServiceFactory {
 
             @Override
             public Map<String, Date> getInactiveDevices() throws NetworkIOException {
-                LOGGER.warn("Inactive devices not recoverable, APNS not configured properly");
+                LOGGER.warn("Inactive devices not recoverable, APNs not configured properly");
                 return Collections.emptyMap();
             }
 
             @Override
             public void testConnection() throws NetworkIOException {
-                LOGGER.warn("APNS connection not tested, APNS not configured properly");
+                LOGGER.warn("APNs connection not tested, APNs not configured properly");
             }
         };
     }
