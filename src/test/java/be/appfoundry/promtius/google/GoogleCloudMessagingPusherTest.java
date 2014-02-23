@@ -5,7 +5,10 @@ import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
 import be.appfoundry.promtius.PushPayload;
 import be.appfoundry.promtius.exception.PushFailedException;
+import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
+import com.google.android.gcm.server.MulticastResult;
+import com.google.android.gcm.server.Result;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -28,12 +31,13 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-//import static com.google.android.gcm.server.MulticastResultFactory.getMulticastResultBuilder;
-//import static com.google.android.gcm.server.MulticastResultFactory.getResult;
+import static com.google.android.gcm.server.MulticastResultFactory.getMulticastResultBuilder;
+import static com.google.android.gcm.server.MulticastResultFactory.getResult;
 
 /**
  * @author Mike Seghers
@@ -113,45 +117,46 @@ public class GoogleCloudMessagingPusherTest {
     }
 
     @Test
-    @Ignore
     public void test_multicastReturnEvaluated_cannonicalReplacement() throws Exception {
-        /*List<ClientToken<String>> tokens = Arrays.asList(tokenA);
+        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA);
         List<Result> results = Arrays.asList(getResult("newToken", "err", "1"));
         MulticastResult expected = getMulticastResultBuilder(50, 50, 20, 1, results);
 
-        when(clientTokenService.findPushTokensForOperatingSystem(PushToken.OperatingSystem.ANDROID)).thenReturn(tokens);
+        when(tokenA.getToken()).thenReturn("oldToken");
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
         when(wrapper.send(Mockito.any(Message.class), anyList(), anyInt())).thenReturn(expected);
+        when(clientTokenFactory.createClientToken("oldToken", TEST_PLATFORM)).thenReturn(tokenB);
+        when(clientTokenFactory.createClientToken("newToken", TEST_PLATFORM)).thenReturn(tokenA);
 
         pusher.sendPush(new PushPayload("message"));
 
         ArgumentCaptor<ClientToken> oldTokenCaptor = ArgumentCaptor.forClass(ClientToken.class);
         verify(clientTokenService).unregisterClientToken(oldTokenCaptor.capture());
-        assertThat(oldTokenCaptor.getValue(), is(tokenA));
+        assertThat((ClientToken<String, String>)oldTokenCaptor.getValue(), is(tokenB));
         ArgumentCaptor<ClientToken> tokenCaptor = ArgumentCaptor.forClass(ClientToken.class);
         verify(clientTokenService).registerClientToken(tokenCaptor.capture());
-        ClientToken savedToken = tokenCaptor.getValue();
-        assertThat((String) savedToken.getToken(), is("newToken"));
-        assertThat(savedToken.getPlatform(), is(platform));*/
+        ClientToken<String, String> savedToken = tokenCaptor.getValue();
+        assertThat(savedToken, is(tokenA));
     }
 
     @Test
-    @Ignore
     public void test_multicastReturnEvaluated_removal() throws Exception {
-        /*ClientToken<String> oldToken = tokenA;
-        List<ClientToken<String>> tokens = Arrays.asList(tokenA);
+        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA);
         List<Result> results = Arrays.asList(getResult(null, Constants.ERROR_NOT_REGISTERED, null));
         MulticastResult expected = getMulticastResultBuilder(50, 50, 20, 1, results);
 
-        when(clientTokenService.findPushTokensForOperatingSystem(PushToken.OperatingSystem.ANDROID)).thenReturn(tokens);
+        when(tokenA.getToken()).thenReturn("oldToken");
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
         when(wrapper.send(Mockito.any(Message.class), anyList(), anyInt())).thenReturn(expected);
+        when(clientTokenFactory.createClientToken("oldToken", TEST_PLATFORM)).thenReturn(tokenB);
 
         pusher.sendPush(new PushPayload("message"));
 
         ArgumentCaptor<ClientToken> oldTokenCaptor = ArgumentCaptor.forClass(ClientToken.class);
         verify(clientTokenService).unregisterClientToken(oldTokenCaptor.capture());
-        assertThat((String) oldTokenCaptor.getValue().getToken(), is("token1"));
+        assertThat((ClientToken<String, String>)oldTokenCaptor.getValue(), is(tokenB));
 
-        verify(clientTokenService, never()).registerClientToken(Mockito.any(ClientToken.class));*/
+        verify(clientTokenService, never()).registerClientToken(Mockito.any(ClientToken.class));
     }
 
     @Test
