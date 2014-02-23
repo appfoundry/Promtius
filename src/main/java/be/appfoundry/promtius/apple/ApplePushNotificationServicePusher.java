@@ -55,4 +55,9 @@ public class ApplePushNotificationServicePusher<P> implements Pusher<P> {
         apnsService.push(tokenIds, payloadAsString);
         LOGGER.info("APNs push finished", payload);
     }
+
+    @Override
+    public P getPlatform() {
+        return platform;
+    }
 }

@@ -45,11 +45,11 @@ public class ApplePushNotificationServicePusherTest {
     @Mock
     private ClientToken<String, String> tokenB;
 
-    private ApplePushNotificationServicePusher pusher;
+    private ApplePushNotificationServicePusher<String> pusher;
 
     @Before
     public void setUp() throws Exception {
-        pusher = new ApplePushNotificationServicePusher(apnsService, clientTokenService, clientTokenFactory, TEST_PLATFORM);
+        pusher = new ApplePushNotificationServicePusher<String>(apnsService, clientTokenService, clientTokenFactory, TEST_PLATFORM);
     }
 
     @Test
@@ -85,5 +85,10 @@ public class ApplePushNotificationServicePusherTest {
         List<ClientToken> allValues = pushTokenCaptor.getAllValues();
         assertThat((ClientToken<String, String>) allValues.get(0), is(tokenA));
         assertThat((ClientToken<String, String>) allValues.get(1), is(tokenB));
+    }
+
+    @Test
+    public void test_getPlatform() throws Exception {
+        assertThat(pusher.getPlatform(), is(TEST_PLATFORM));
     }
 }

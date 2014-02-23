@@ -40,10 +40,10 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleCloudMessagingPusherTest {
-    private GoogleCloudMessagingPusher pusher;
+    private GoogleCloudMessagingPusher<String> pusher;
 
     @Mock
-    private ClientTokenService clientTokenService;
+    private ClientTokenService<String, String> clientTokenService;
 
     @Mock
     private GoogleSenderWrapper wrapper;
@@ -57,7 +57,7 @@ public class GoogleCloudMessagingPusherTest {
 
     @Before
     public void setUp() throws Exception {
-        pusher = new GoogleCloudMessagingPusher(wrapper, clientTokenService, clientTokenFactory, TEST_PLATFORM);
+        pusher = new GoogleCloudMessagingPusher<String>(wrapper, clientTokenService, clientTokenFactory, TEST_PLATFORM);
     }
 
     @Test
@@ -152,5 +152,10 @@ public class GoogleCloudMessagingPusherTest {
         assertThat((String) oldTokenCaptor.getValue().getToken(), is("token1"));
 
         verify(clientTokenService, never()).registerClientToken(Mockito.any(ClientToken.class));*/
+    }
+
+    @Test
+    public void test_getPlatform() throws Exception {
+        assertThat(pusher.getPlatform(), is(TEST_PLATFORM));
     }
 }

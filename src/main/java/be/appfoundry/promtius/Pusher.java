@@ -9,6 +9,13 @@ package be.appfoundry.promtius;
 public interface Pusher<P> {
     /**
      * Sends the given {@link PushPayload} to a specific client platform.
+     *
+     * @throws be.appfoundry.promtius.exception.PushFailedException
      */
     void sendPush(PushPayload payload);
+
+    /**
+     * Returns the platform identifier for which this pusher is working.
+     */
+    P getPlatform();
 }

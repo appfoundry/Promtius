@@ -3,9 +3,9 @@ package be.appfoundry.promtius.google;
 import be.appfoundry.promtius.ClientToken;
 import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
-import be.appfoundry.promtius.exception.PushFailedException;
 import be.appfoundry.promtius.PushPayload;
 import be.appfoundry.promtius.Pusher;
+import be.appfoundry.promtius.exception.PushFailedException;
 import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.MulticastResult;
@@ -28,7 +28,8 @@ public final class GoogleCloudMessagingPusher<P> implements Pusher<P> {
     private final P platform;
     private final ClientTokenFactory<String, P> clientTokenFactory;
 
-    public GoogleCloudMessagingPusher(final GoogleSenderWrapper senderWrapper, final ClientTokenService infoService, final ClientTokenFactory<String, P> clientTokenFactory, final P platform) {
+    public GoogleCloudMessagingPusher(final GoogleSenderWrapper senderWrapper, final ClientTokenService<String, P> infoService,
+                                      final ClientTokenFactory<String, P> clientTokenFactory, final P platform) {
         this.senderWrapper = senderWrapper;
         this.clientTokenService = infoService;
         this.clientTokenFactory = clientTokenFactory;
@@ -108,4 +109,8 @@ public final class GoogleCloudMessagingPusher<P> implements Pusher<P> {
     }
 
 
+    @Override
+    public P getPlatform() {
+        return platform;
+    }
 }
