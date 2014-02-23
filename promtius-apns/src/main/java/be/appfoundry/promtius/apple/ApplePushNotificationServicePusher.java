@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * A {@link be.appfoundry.promtius.Pusher} capable of sending payload via Apple's Push Notification Services.
+ *
+ * @param <P> The client platform identifier type, identifying the platform to which the pusher pushes messages.
  * @author Mike Seghers
  */
 public class ApplePushNotificationServicePusher<P> implements Pusher<P> {
@@ -45,7 +48,7 @@ public class ApplePushNotificationServicePusher<P> implements Pusher<P> {
         }
 
         List<ClientToken<String, P>> tokens = clientTokenService.findClientTokensForOperatingSystem(platform);
-        List<String> tokenIds = new ArrayList<String>(tokens.size());
+        List<String> tokenIds = new ArrayList<>(tokens.size());
         LOGGER.debug("Pushing with tokens ({})", tokenIds);
         for (ClientToken<String, P> token : tokens) {
             tokenIds.add(token.getToken());

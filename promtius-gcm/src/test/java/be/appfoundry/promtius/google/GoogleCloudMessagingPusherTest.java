@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -22,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.google.android.gcm.server.MulticastResultFactory.getMulticastResultBuilder;
+import static com.google.android.gcm.server.MulticastResultFactory.getResult;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -35,28 +38,29 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import static com.google.android.gcm.server.MulticastResultFactory.getMulticastResultBuilder;
-import static com.google.android.gcm.server.MulticastResultFactory.getResult;
-
 /**
  * @author Mike Seghers
  */
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleCloudMessagingPusherTest {
-    private GoogleCloudMessagingPusher<String> pusher;
+    private static final String TEST_PLATFORM = "Android";
 
+    private GoogleCloudMessagingPusher<String> pusher;
     @Mock
     private ClientTokenService<String, String> clientTokenService;
-
     @Mock
     private GoogleSenderWrapper wrapper;
-    private static final String TEST_PLATFORM = "Android";
     @Mock
     private ClientToken<String, String> tokenA;
     @Mock
     private ClientToken<String, String> tokenB;
     @Mock
     private ClientTokenFactory<String, String> clientTokenFactory;
+
+    @Captor
+    private ArgumentCaptor<List<String>> deviceIdCaptor;
+    @Captor
+    private ArgumentCaptor<ClientToken<String, String>> tokenCaptor;
 
     @Before
     public void setUp() throws Exception {
@@ -73,7 +77,6 @@ public class GoogleCloudMessagingPusherTest {
         pusher.sendPush(payload);
 
         ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
-        ArgumentCaptor<List> deviceIdCaptor = ArgumentCaptor.<List>forClass(List.class);
         verify(wrapper).send(messageCaptor.capture(), deviceIdCaptor.capture(), eq(5));
 
         Message message = messageCaptor.getValue();
@@ -107,13 +110,13 @@ public class GoogleCloudMessagingPusherTest {
 
         pusher.sendPush(new PushPayload("message"));
 
-        ArgumentCaptor<List> deviceIdCaptor = ArgumentCaptor.forClass(List.class);
+
         verify(wrapper, times(3)).send(Mockito.any(Message.class), deviceIdCaptor.capture(), anyInt());
-        List<List> values = deviceIdCaptor.getAllValues();
+        List<List<String>> values = deviceIdCaptor.getAllValues();
         assertThat(values, hasSize(3));
-        assertThat(values.get(0).size(), is(1000));
-        assertThat(values.get(1).size(), is(1000));
-        assertThat(values.get(2).size(), is(500));
+        assertThat(values.get(0), hasSize(1000));
+        assertThat(values.get(1), hasSize(1000));
+        assertThat(values.get(2), hasSize(500));
     }
 
     @Test
@@ -130,13 +133,10 @@ public class GoogleCloudMessagingPusherTest {
 
         pusher.sendPush(new PushPayload("message"));
 
-        ArgumentCaptor<ClientToken> oldTokenCaptor = ArgumentCaptor.forClass(ClientToken.class);
-        verify(clientTokenService).unregisterClientToken(oldTokenCaptor.capture());
-        assertThat((ClientToken<String, String>)oldTokenCaptor.getValue(), is(tokenB));
-        ArgumentCaptor<ClientToken> tokenCaptor = ArgumentCaptor.forClass(ClientToken.class);
+        verify(clientTokenService).unregisterClientToken(tokenCaptor.capture());
+        assertThat(tokenCaptor.getValue(), is(tokenB));
         verify(clientTokenService).registerClientToken(tokenCaptor.capture());
-        ClientToken<String, String> savedToken = tokenCaptor.getValue();
-        assertThat(savedToken, is(tokenA));
+        assertThat(tokenCaptor.getValue(), is(tokenA));
     }
 
     @Test
@@ -152,10 +152,8 @@ public class GoogleCloudMessagingPusherTest {
 
         pusher.sendPush(new PushPayload("message"));
 
-        ArgumentCaptor<ClientToken> oldTokenCaptor = ArgumentCaptor.forClass(ClientToken.class);
-        verify(clientTokenService).unregisterClientToken(oldTokenCaptor.capture());
-        assertThat((ClientToken<String, String>)oldTokenCaptor.getValue(), is(tokenB));
-
+        verify(clientTokenService).unregisterClientToken(tokenCaptor.capture());
+        assertThat(tokenCaptor.getValue(), is(tokenB));
         verify(clientTokenService, never()).registerClientToken(Mockito.any(ClientToken.class));
     }
 

@@ -10,9 +10,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,6 +23,7 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.contains;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,17 +42,20 @@ public class ApplePushNotificationServicePusherTest {
     @Mock
     private ClientTokenFactory<String, String> clientTokenFactory;
 
+    @Captor
+    ArgumentCaptor<ClientToken<String, String>> pushTokenCaptor;
+
     private static final String TEST_PLATFORM = "iOS";
-    @Mock
     private ClientToken<String, String> tokenA;
-    @Mock
     private ClientToken<String, String> tokenB;
 
     private ApplePushNotificationServicePusher<String> pusher;
 
     @Before
     public void setUp() throws Exception {
-        pusher = new ApplePushNotificationServicePusher<String>(apnsService, clientTokenService, clientTokenFactory, TEST_PLATFORM);
+        pusher = new ApplePushNotificationServicePusher<>(apnsService, clientTokenService, clientTokenFactory, TEST_PLATFORM);
+        tokenA = new TestClientToken("token1");
+        tokenB = new TestClientToken("token2");
     }
 
     @Test
@@ -57,15 +63,10 @@ public class ApplePushNotificationServicePusherTest {
         PushPayload payload = new PushPayload("message");
         List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
-        when(tokenA.getToken()).thenReturn("token1");
-        when(tokenB.getToken()).thenReturn("token2");
 
         pusher.sendPush(payload);
 
-        ArgumentCaptor<String> stringCaptor = ArgumentCaptor.forClass(String.class);
-        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), stringCaptor.capture());
-        System.out.println(stringCaptor.getValue());
-
+        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), contains("message"));
     }
 
     @Test
@@ -80,15 +81,33 @@ public class ApplePushNotificationServicePusherTest {
         PushPayload payload = new PushPayload("message");
         pusher.sendPush(payload);
 
-        ArgumentCaptor<ClientToken> pushTokenCaptor = ArgumentCaptor.forClass(ClientToken.class);
         verify(clientTokenService, times(2)).unregisterClientToken(pushTokenCaptor.capture());
-        List<ClientToken> allValues = pushTokenCaptor.getAllValues();
-        assertThat((ClientToken<String, String>) allValues.get(0), is(tokenA));
-        assertThat((ClientToken<String, String>) allValues.get(1), is(tokenB));
+        List<ClientToken<String, String>> allValues = pushTokenCaptor.getAllValues();
+        assertThat(allValues.get(0), is(tokenA));
+        assertThat(allValues.get(1), is(tokenB));
     }
 
     @Test
     public void test_getPlatform() throws Exception {
         assertThat(pusher.getPlatform(), is(TEST_PLATFORM));
+    }
+
+    private static class TestClientToken implements ClientToken<String, String> {
+
+        private final String token;
+
+        private TestClientToken(String token) {
+            this.token = token;
+        }
+
+        @Override
+        public String getToken() {
+            return token;
+        }
+
+        @Override
+        public String getPlatform() {
+            return TEST_PLATFORM;
+        }
     }
 }
