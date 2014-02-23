@@ -21,6 +21,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static com.google.android.gcm.server.MulticastResultFactory.getMulticastResultBuilder;
@@ -45,9 +46,9 @@ import static org.mockito.Mockito.when;
 public class GoogleCloudMessagingPusherTest {
     private static final String TEST_PLATFORM = "Android";
 
-    private GoogleCloudMessagingPusher<String> pusher;
+    private GoogleCloudMessagingPusher<String, String> pusher;
     @Mock
-    private ClientTokenService<String, String> clientTokenService;
+    private ClientTokenService<String, String, String> clientTokenService;
     @Mock
     private GoogleSenderWrapper wrapper;
     @Mock
@@ -64,7 +65,7 @@ public class GoogleCloudMessagingPusherTest {
 
     @Before
     public void setUp() throws Exception {
-        pusher = new GoogleCloudMessagingPusher<String>(wrapper, clientTokenService, clientTokenFactory, TEST_PLATFORM);
+        pusher = new GoogleCloudMessagingPusher<>(wrapper, clientTokenService, clientTokenFactory, TEST_PLATFORM);
     }
 
     @Test
@@ -75,6 +76,31 @@ public class GoogleCloudMessagingPusherTest {
         when(tokenA.getToken()).thenReturn("token1");
         when(tokenB.getToken()).thenReturn("token2");
         pusher.sendPush(payload);
+
+        ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
+        verify(wrapper).send(messageCaptor.capture(), deviceIdCaptor.capture(), eq(5));
+
+        Message message = messageCaptor.getValue();
+        assertThat(message.getData().get("message"), is("message"));
+        assertThat(message.getCollapseKey(), is("kolepski"));
+        assertThat(message.getTimeToLive(), is(nullValue()));
+
+        List<String> deviceIds = deviceIdCaptor.getValue();
+        assertThat(deviceIds, hasSize(2));
+        assertThat(deviceIds, hasItems("token1", "token2"));
+    }
+
+    @Test
+    public void test_sendPushToGroup() throws Exception {
+        PushPayload payload = new PushPayload("message");
+        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(tokenA.getToken()).thenReturn("token1");
+        when(tokenB.getToken()).thenReturn("token2");
+        final Collection<String> groups = Arrays.asList("groupA", "groupB");
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM, groups)).thenReturn(tokens);
+
+        pusher.sendPush(payload, groups);
 
         ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
         verify(wrapper).send(messageCaptor.capture(), deviceIdCaptor.capture(), eq(5));

@@ -16,6 +16,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +39,7 @@ public class ApplePushNotificationServicePusherTest {
     private ApnsService apnsService;
 
     @Mock
-    private ClientTokenService<String, String> clientTokenService;
+    private ClientTokenService<String, String, String> clientTokenService;
     @Mock
     private ClientTokenFactory<String, String> clientTokenFactory;
 
@@ -49,7 +50,7 @@ public class ApplePushNotificationServicePusherTest {
     private ClientToken<String, String> tokenA;
     private ClientToken<String, String> tokenB;
 
-    private ApplePushNotificationServicePusher<String> pusher;
+    private ApplePushNotificationServicePusher<String, String> pusher;
 
     @Before
     public void setUp() throws Exception {
@@ -65,6 +66,18 @@ public class ApplePushNotificationServicePusherTest {
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
 
         pusher.sendPush(payload);
+
+        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), contains("message"));
+    }
+
+    @Test
+    public void test_sendPushToGroup() throws Exception {
+        PushPayload payload = new PushPayload("message");
+        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        final Collection<String> groups = Arrays.asList("groupA", "groupB");
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM, groups)).thenReturn(tokens);
+
+        pusher.sendPush(payload, groups);
 
         verify(apnsService).push(eq(Arrays.asList("token1", "token2")), contains("message"));
     }

@@ -5,7 +5,7 @@ package be.appfoundry.promtius;
  * ClientTokenService}.
  *
  * @param <T> The type of the token send by the client.
- * @param <P> The client platform type of the token.
+ * @param <P> The platform identifier type.
  * @author Mike Seghers
  */
 public interface ClientTokenFactory<T, P> {

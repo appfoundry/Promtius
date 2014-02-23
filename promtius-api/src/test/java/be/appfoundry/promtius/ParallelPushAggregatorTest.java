@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 
 import static org.junit.Assert.*;
@@ -16,13 +17,13 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ParallelPushAggregatorTest {
-    private ParallelPushAggregator pushAggregator;
+    private ParallelPushAggregator<String, String> pushAggregator;
 
     @Mock
-    private Pusher pusherA;
+    private Pusher<String, String> pusherA;
 
     @Mock
-    private Pusher pusherB;
+    private Pusher<String, String> pusherB;
 
     private boolean pushFinished;
 
@@ -35,14 +36,26 @@ public class ParallelPushAggregatorTest {
 
     @Before
     public void setUp() throws Exception {
-        pushAggregator = new ParallelPushAggregator(new HashSet<>(Arrays.asList(pusherA, pusherB)));
+        pushAggregator = new ParallelPushAggregator<>(new HashSet<>(Arrays.asList(pusherA, pusherB)));
     }
 
     @Test
     public void test_sendPush() throws Exception {
         PushPayload payload = new PushPayload("message");
         pushAggregator.sendPush(payload, tracker);
-        waitUntilAggregatorHasFinishedAndVerify(payload, 500);
+        waitUntilAggregatorHasFinished(payload, 500);
+        verify(pusherA).sendPush(payload);
+        verify(pusherB).sendPush(payload);
+    }
+
+    @Test
+    public void test_sendPushToGroup() throws Exception {
+        PushPayload payload = new PushPayload("message");
+        final Collection<String> groups = Arrays.asList("groupA", "groupB");
+        pushAggregator.sendPush(payload, groups, tracker);
+        waitUntilAggregatorHasFinished(payload, 500);
+        verify(pusherA).sendPush(payload, groups);
+        verify(pusherB).sendPush(payload, groups);
     }
 
     @Test
@@ -51,10 +64,12 @@ public class ParallelPushAggregatorTest {
         doThrow(new IllegalStateException()).when(pusherA).sendPush(payload);
         doThrow(new IllegalStateException()).when(pusherB).sendPush(payload);
         pushAggregator.sendPush(payload, tracker);
-        waitUntilAggregatorHasFinishedAndVerify(payload, 500);
+        waitUntilAggregatorHasFinished(payload, 500);
+        verify(pusherA).sendPush(payload);
+        verify(pusherB).sendPush(payload);
     }
 
-    private void waitUntilAggregatorHasFinishedAndVerify(PushPayload payload, long timeout) throws InterruptedException {
+    private void waitUntilAggregatorHasFinished(PushPayload payload, long timeout) throws InterruptedException {
         long start = System.currentTimeMillis();
         long timePassed = 0;
         while (!pushFinished && timePassed < timeout) {
@@ -65,8 +80,5 @@ public class ParallelPushAggregatorTest {
         if (!pushFinished) {
             fail("Aggregator didn't finish within timeout.");
         }
-
-        verify(pusherA).sendPush(payload);
-        verify(pusherB).sendPush(payload);
     }
 }

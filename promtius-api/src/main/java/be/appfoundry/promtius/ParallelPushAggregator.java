@@ -8,47 +8,52 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
 /**
+ * {@link PushAggregator} using {@link java.util.concurrent.FutureTask}s to push messages concurrently via injected {@link Pusher}s. Each given Pusher will get his own task. In
+ * this way each pusher is run concurrently.
+ *
+ * @param <P> The platform identifier type, identifying the platform to which the pusher pushes its messages.
+ * @param <G> The type of the group identifier. A group identifier is used to put client tokens in a collection of groups, so that a push can be done to specific groups.
  * @author Mike Seghers
  */
-public class ParallelPushAggregator implements PushAggregator {
+public class ParallelPushAggregator<P, G> implements PushAggregator<P, G> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParallelPushAggregator.class);
 
+    private Set<Pusher<P, G>> pusherRegistry;
 
-    private Set<Pusher> pusherRegistry;
-
-    public ParallelPushAggregator(Set<Pusher> pusherRegistry) {
+    public ParallelPushAggregator(final Set<Pusher<P, G>> pusherRegistry) {
         this.pusherRegistry = new HashSet<>(pusherRegistry);
     }
 
     @Override
     public void sendPush(final PushPayload payload, final PusherAggregatorTracker tracker) {
         LOGGER.debug("Sending payload via parallel aggregator");
+        sendPushUsingStrategy(tracker, new AllPushStrategy<P, G>(payload));
+    }
+
+    @Override
+    public void sendPush(final PushPayload payload, final Collection<G> groups, final PusherAggregatorTracker tracker) {
+        LOGGER.debug("Sending payload via parallel aggregator for groups");
+        sendPushUsingStrategy(tracker, new GroupPushStrategy<P, G>(payload, groups));
+    }
+
+    private void sendPushUsingStrategy(final PusherAggregatorTracker tracker, final PushStrategy<P, G> pushStrategy) {
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(pusherRegistry.size()));
-        createFutureTaskForEachPusherToSendPayload(payload, tracker, service);
+        PusherAggregatorTaskCallback callback = new PusherAggregatorTaskCallback(tracker, pusherRegistry.size());
+        for (final Pusher<P, G> p : pusherRegistry) {
+            LOGGER.debug("Setting up task for pusher {}", p);
+            createListenableTaskAndExecuteForPusher(service, callback, pushStrategy.newRunnableForPusher(p));
+        }
         service.shutdown();
     }
 
-    private void createFutureTaskForEachPusherToSendPayload(final PushPayload payload, final PusherAggregatorTracker tracker, final ListeningExecutorService service) {
-        PusherAggregatorTaskCallback callback = new PusherAggregatorTaskCallback(tracker, pusherRegistry.size());
-        for (final Pusher p : pusherRegistry) {
-            LOGGER.debug("Setting up task for pusher {}", p);
-            createListenableTaskAndExecuteForPusher(payload, service, callback, p);
-        }
-    }
-
-    private void createListenableTaskAndExecuteForPusher(final PushPayload payload, final ListeningExecutorService service, final PusherAggregatorTaskCallback callback,
-                                                         final Pusher p) {
-        ListenableFutureTask<Boolean> task = ListenableFutureTask.create(new Runnable() {
-            @Override
-            public void run() {
-                p.sendPush(payload);
-            }
-        }, Boolean.TRUE);
+    private void createListenableTaskAndExecuteForPusher(final ListeningExecutorService service, final PusherAggregatorTaskCallback callback, final Runnable runnable) {
+        ListenableFutureTask<Boolean> task = ListenableFutureTask.create(runnable, Boolean.TRUE);
         Futures.addCallback(task, callback);
         service.execute(task);
     }
@@ -60,7 +65,7 @@ public class ParallelPushAggregator implements PushAggregator {
         private int failureCount;
         private PusherAggregatorTracker delegate;
 
-        public PusherAggregatorTaskCallback(PusherAggregatorTracker delegate, int taskCount) {
+        public PusherAggregatorTaskCallback(final PusherAggregatorTracker delegate, final int taskCount) {
             this.delegate = delegate;
             this.taskCount = taskCount;
         }
@@ -69,17 +74,17 @@ public class ParallelPushAggregator implements PushAggregator {
         public synchronized void onSuccess(final Boolean result) {
             LOGGER.debug("Push success detected");
             successCount++;
-            markDelegateWhenFinshed();
+            markDelegateWhenFinished();
         }
 
         @Override
         public synchronized void onFailure(final Throwable t) {
             LOGGER.debug("Push failure received", t);
             failureCount++;
-            markDelegateWhenFinshed();
+            markDelegateWhenFinished();
         }
 
-        private void markDelegateWhenFinshed() {
+        private void markDelegateWhenFinished() {
             if (isFinished()) {
                 LOGGER.debug("Asking delegate to mark push aggregators as being finished.");
                 delegate.markFinished();
@@ -89,7 +94,48 @@ public class ParallelPushAggregator implements PushAggregator {
         private boolean isFinished() {
             return taskCount == (successCount + failureCount);
         }
+    }
 
+    private interface PushStrategy<P, G> {
+        Runnable newRunnableForPusher(Pusher<P, G> pusher);
+    }
 
+    private static class GroupPushStrategy<P, G> extends AllPushStrategy<P, G> {
+
+        private Collection<G> groups;
+
+        private GroupPushStrategy(final PushPayload payload, final Collection<G> groups) {
+            super(payload);
+            this.groups = groups;
+        }
+
+        @Override
+        public Runnable newRunnableForPusher(final Pusher<P, G> pusher) {
+            return new Runnable() {
+                @Override
+                public void run() {
+                    pusher.sendPush(payload, groups);
+                }
+            };
+        }
+    }
+
+    private static class AllPushStrategy<P, G> implements PushStrategy<P, G> {
+
+        protected PushPayload payload;
+
+        private AllPushStrategy(final PushPayload payload) {
+            this.payload = payload;
+        }
+
+        @Override
+        public Runnable newRunnableForPusher(final Pusher<P, G> pusher) {
+            return new Runnable() {
+                @Override
+                public void run() {
+                    pusher.sendPush(payload);
+                }
+            };
+        }
     }
 }
