@@ -1,23 +1,14 @@
 package be.appfoundry.promtius.apple;
 
 import com.google.common.collect.Lists;
-import com.notnoop.apns.ApnsNotification;
-import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Date;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.*;
+
 /**
  * @author Mike Seghers
  */

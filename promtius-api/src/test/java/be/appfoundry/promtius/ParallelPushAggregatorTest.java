@@ -3,16 +3,12 @@ package be.appfoundry.promtius;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.HashSet;
 
-import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 /**
@@ -39,14 +35,14 @@ public class ParallelPushAggregatorTest {
 
     @Before
     public void setUp() throws Exception {
-        pushAggregator = new ParallelPushAggregator(new HashSet<Pusher>(Arrays.asList(pusherA, pusherB)));
+        pushAggregator = new ParallelPushAggregator(new HashSet<>(Arrays.asList(pusherA, pusherB)));
     }
 
     @Test
     public void test_sendPush() throws Exception {
         PushPayload payload = new PushPayload("message");
         pushAggregator.sendPush(payload, tracker);
-        waitUntillAgregatorHasFinishedAndVerify(payload, 500);
+        waitUntilAggregatorHasFinishedAndVerify(payload, 500);
     }
 
     @Test
@@ -55,10 +51,10 @@ public class ParallelPushAggregatorTest {
         doThrow(new IllegalStateException()).when(pusherA).sendPush(payload);
         doThrow(new IllegalStateException()).when(pusherB).sendPush(payload);
         pushAggregator.sendPush(payload, tracker);
-        waitUntillAgregatorHasFinishedAndVerify(payload, 500);
+        waitUntilAggregatorHasFinishedAndVerify(payload, 500);
     }
 
-    private void waitUntillAgregatorHasFinishedAndVerify(PushPayload payload, long timeout) throws InterruptedException {
+    private void waitUntilAggregatorHasFinishedAndVerify(PushPayload payload, long timeout) throws InterruptedException {
         long start = System.currentTimeMillis();
         long timePassed = 0;
         while (!pushFinished && timePassed < timeout) {

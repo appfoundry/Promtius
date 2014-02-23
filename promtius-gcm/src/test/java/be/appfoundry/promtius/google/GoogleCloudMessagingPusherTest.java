@@ -10,7 +10,6 @@ import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.MulticastResult;
 import com.google.android.gcm.server.Result;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -99,10 +98,11 @@ public class GoogleCloudMessagingPusherTest {
 
     @Test
     public void test_multicastSend() throws Exception {
-        List<ClientToken<String, String>> tokens = new ArrayList<ClientToken<String, String>>(2500);
+        List<ClientToken<String, String>> tokens = new ArrayList<>(2500);
         for (int i = 0; i < 2500; i++) {
             tokens.add(tokenA);
         }
+        when(tokenA.getToken()).thenReturn("token");
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
 
         pusher.sendPush(new PushPayload("message"));

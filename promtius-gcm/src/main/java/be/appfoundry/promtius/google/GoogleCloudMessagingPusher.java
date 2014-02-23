@@ -10,6 +10,9 @@ import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.MulticastResult;
 import com.google.android.gcm.server.Result;
+import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,6 +23,7 @@ import java.util.List;
  * @author Mike Seghers
  */
 public final class GoogleCloudMessagingPusher<P> implements Pusher<P> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GoogleCloudMessagingPusher.class);
 
     public static final String COLLAPSE_KEY = "kolepski";
     public static final int MAX_MULTICAST_SIZE = 1000;
@@ -39,19 +43,19 @@ public final class GoogleCloudMessagingPusher<P> implements Pusher<P> {
     @Override
     public void sendPush(PushPayload payload) {
         //payload to message, and send via sender
-        List<ClientToken<String, P>> tokens = clientTokenService.findClientTokensForOperatingSystem(platform);
-
-        List<String> partialDeviceIds = new ArrayList<String>();
-        int counter = 0;
         Message message = new Message.Builder().addData("message", payload.getMessage()).collapseKey(COLLAPSE_KEY).build();
 
+        List<ClientToken<String, P>> tokens = clientTokenService.findClientTokensForOperatingSystem(platform);
+
+        List<String> partialDeviceIds = new ArrayList<>();
+        int counter = 0;
         for (ClientToken<String, P> token : tokens) {
             partialDeviceIds.add(token.getToken());
             counter++;
             if (counter == MAX_MULTICAST_SIZE) {
                 counter = 0;
-                sendMessageBatch(partialDeviceIds, message);
-                partialDeviceIds = new ArrayList<String>();
+                sendMessageBatch(ImmutableList.copyOf(partialDeviceIds), message);
+                partialDeviceIds.clear();
             }
         }
 
