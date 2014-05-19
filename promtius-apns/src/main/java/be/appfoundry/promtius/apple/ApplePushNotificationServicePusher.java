@@ -20,21 +20,22 @@ import java.util.Map;
 /**
  * A {@link be.appfoundry.promtius.Pusher} capable of sending payload via Apple's Push Notification Services.
  *
- * @param <P> The platform identifier type, identifying the platform to which the pusher pushes its messages.
- * @param <G> The type of the group identifier. A group identifier is used to put client tokens in a collection of groups, so that a push can be done to specific groups.
+ * @param <CT> The type of ClientTokens this pusher is using
+ * @param <P>  The platform identifier type, identifying the platform to which the pusher pushes its messages.
+ * @param <G>  The type of the group identifier. A group identifier is used to put client tokens in a collection of groups, so that a push can be done to specific groups.
  * @author Mike Seghers
  */
-public class ApplePushNotificationServicePusher<P, G> implements Pusher<P, G> {
+public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P>, P, G> implements Pusher<P, G> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplePushNotificationServicePusher.class);
 
     private final ApnsService apnsService;
-    private final ClientTokenService<String, P, G> clientTokenService;
-    private final ClientTokenFactory<String, P> clientTokenFactory;
+    private final ClientTokenService<CT, String, P, G> clientTokenService;
+    private final ClientTokenFactory<CT, String, P> clientTokenFactory;
     private final P platform;
 
-    public ApplePushNotificationServicePusher(ApnsService apnsService, ClientTokenService<String, P, G> clientTokenService, ClientTokenFactory<String, P> clientTokenFactory,
-                                              final P platform) {
+    public ApplePushNotificationServicePusher(ApnsService apnsService, ClientTokenService<CT, String, P, G> clientTokenService,
+                                              ClientTokenFactory<CT, String, P> clientTokenFactory, final P platform) {
         this.apnsService = apnsService;
         this.clientTokenService = clientTokenService;
         this.clientTokenFactory = clientTokenFactory;
@@ -57,7 +58,7 @@ public class ApplePushNotificationServicePusher<P, G> implements Pusher<P, G> {
         LOGGER.info("APNs push finished", payload);
     }
 
-    private void pushPayloadToClientsIdentifiedByTokens(final PushPayload payload, final List<ClientToken<String, P>> tokens) {
+    private void pushPayloadToClientsIdentifiedByTokens(final PushPayload payload, final List<CT> tokens) {
         List<String> tokenIds = Lists.transform(tokens, new Function<ClientToken<String, P>, String>() {
             @Override
             public String apply(final ClientToken<String, P> input) {

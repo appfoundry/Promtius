@@ -20,22 +20,23 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * @param <CT> The type of ClientTokens this pusher is using
  * @param <P> The platform identifier type, identifying the platform to which the pusher pushes its messages.
  * @param <G> The type of the group identifier. A group identifier is used to put client tokens in a collection of groups, so that a push can be done to specific groups.
  * @author Mike Seghers
  */
-public final class GoogleCloudMessagingPusher<P, G> implements Pusher<P, G> {
+public final class GoogleCloudMessagingPusher<CT extends ClientToken<String, P>, P, G> implements Pusher<P, G> {
     private static final Logger LOGGER = LoggerFactory.getLogger(GoogleCloudMessagingPusher.class);
 
     public static final String COLLAPSE_KEY = "kolepski";
     public static final int MAX_MULTICAST_SIZE = 1000;
     private final GoogleSenderWrapper senderWrapper;
-    private final ClientTokenService<String, P, G> clientTokenService;
+    private final ClientTokenService<CT, String, P, G> clientTokenService;
     private final P platform;
-    private final ClientTokenFactory<String, P> clientTokenFactory;
+    private final ClientTokenFactory<CT, String, P> clientTokenFactory;
 
-    public GoogleCloudMessagingPusher(final GoogleSenderWrapper senderWrapper, final ClientTokenService<String, P, G> infoService,
-                                      final ClientTokenFactory<String, P> clientTokenFactory, final P platform) {
+    public GoogleCloudMessagingPusher(final GoogleSenderWrapper senderWrapper, final ClientTokenService<CT, String, P, G> infoService,
+                                      final ClientTokenFactory<CT, String, P> clientTokenFactory, final P platform) {
         this.senderWrapper = senderWrapper;
         this.clientTokenService = infoService;
         this.clientTokenFactory = clientTokenFactory;
@@ -44,17 +45,17 @@ public final class GoogleCloudMessagingPusher<P, G> implements Pusher<P, G> {
 
     @Override
     public void sendPush(final PushPayload payload) {
-        List<ClientToken<String, P>> tokens = clientTokenService.findClientTokensForOperatingSystem(platform);
+        List<CT> tokens = clientTokenService.findClientTokensForOperatingSystem(platform);
         pushPayloadToClientsIdentifiedByTokens(payload, tokens);
     }
 
     @Override
     public void sendPush(final PushPayload payload, final Collection<G> groups) {
-        List<ClientToken<String, P>> tokens = clientTokenService.findClientTokensForOperatingSystem(platform, groups);
+        List<CT> tokens = clientTokenService.findClientTokensForOperatingSystem(platform, groups);
         pushPayloadToClientsIdentifiedByTokens(payload, tokens);
     }
 
-    private void pushPayloadToClientsIdentifiedByTokens(final PushPayload payload, final List<ClientToken<String, P>> tokens) {
+    private void pushPayloadToClientsIdentifiedByTokens(final PushPayload payload, final List<CT> tokens) {
         Message message = new Message.Builder().addData("message", payload.getMessage()).collapseKey(COLLAPSE_KEY).build();
         List<String> partialDeviceIds = new ArrayList<>();
         int counter = 0;

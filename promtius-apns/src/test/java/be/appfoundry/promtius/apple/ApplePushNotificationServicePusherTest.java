@@ -39,18 +39,18 @@ public class ApplePushNotificationServicePusherTest {
     private ApnsService apnsService;
 
     @Mock
-    private ClientTokenService<String, String, String> clientTokenService;
+    private ClientTokenService<TestClientToken, String, String, String> clientTokenService;
     @Mock
-    private ClientTokenFactory<String, String> clientTokenFactory;
+    private ClientTokenFactory<TestClientToken, String, String> clientTokenFactory;
 
     @Captor
-    ArgumentCaptor<ClientToken<String, String>> pushTokenCaptor;
+    ArgumentCaptor<TestClientToken> pushTokenCaptor;
 
     private static final String TEST_PLATFORM = "iOS";
-    private ClientToken<String, String> tokenA;
-    private ClientToken<String, String> tokenB;
+    private TestClientToken tokenA;
+    private TestClientToken tokenB;
 
-    private ApplePushNotificationServicePusher<String, String> pusher;
+    private ApplePushNotificationServicePusher<TestClientToken, String, String> pusher;
 
     @Before
     public void setUp() throws Exception {
@@ -62,7 +62,7 @@ public class ApplePushNotificationServicePusherTest {
     @Test
     public void test_sendPush() throws Exception {
         PushPayload payload = new PushPayload("message");
-        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
 
         pusher.sendPush(payload);
@@ -73,7 +73,7 @@ public class ApplePushNotificationServicePusherTest {
     @Test
     public void test_sendPushToGroup() throws Exception {
         PushPayload payload = new PushPayload("message");
-        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
         final Collection<String> groups = Arrays.asList("groupA", "groupB");
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM, groups)).thenReturn(tokens);
 
@@ -95,7 +95,7 @@ public class ApplePushNotificationServicePusherTest {
         pusher.sendPush(payload);
 
         verify(clientTokenService, times(2)).unregisterClientToken(pushTokenCaptor.capture());
-        List<ClientToken<String, String>> allValues = pushTokenCaptor.getAllValues();
+        List<TestClientToken> allValues = pushTokenCaptor.getAllValues();
         assertThat(allValues.get(0), is(tokenA));
         assertThat(allValues.get(1), is(tokenB));
     }

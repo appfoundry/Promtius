@@ -46,9 +46,9 @@ import static org.mockito.Mockito.when;
 public class GoogleCloudMessagingPusherTest {
     private static final String TEST_PLATFORM = "Android";
 
-    private GoogleCloudMessagingPusher<String, String> pusher;
+    private GoogleCloudMessagingPusher<ClientToken<String, String>, String, String> pusher;
     @Mock
-    private ClientTokenService<String, String, String> clientTokenService;
+    private ClientTokenService<ClientToken<String, String>, String, String, String> clientTokenService;
     @Mock
     private GoogleSenderWrapper wrapper;
     @Mock
@@ -56,7 +56,7 @@ public class GoogleCloudMessagingPusherTest {
     @Mock
     private ClientToken<String, String> tokenB;
     @Mock
-    private ClientTokenFactory<String, String> clientTokenFactory;
+    private ClientTokenFactory<ClientToken<String, String>, String, String> clientTokenFactory;
 
     @Captor
     private ArgumentCaptor<List<String>> deviceIdCaptor;
