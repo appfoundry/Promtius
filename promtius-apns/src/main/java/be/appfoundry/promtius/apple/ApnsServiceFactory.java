@@ -7,6 +7,7 @@ import com.notnoop.apns.ApnsServiceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.net.URL;
 
 /**
@@ -32,10 +33,10 @@ public class ApnsServiceFactory {
         if (Strings.isNullOrEmpty(certPass)) {
             service = fallBackToNoOpService();
         } else {
-            URL resource = ApplePushNotificationServicePusher.class.getResource(certPath);
+            InputStream resource = ApplePushNotificationServicePusher.class.getResourceAsStream(certPath);
             if (resource != null) {
                 LOGGER.info("APNs configuration seems ok, setting up APNs.");
-                ApnsServiceBuilder apnsServiceBuilder = APNS.newService().withCert(resource.getPath(), certPass);
+                ApnsServiceBuilder apnsServiceBuilder = APNS.newService().withCert(resource, certPass);
                 if (sandbox) {
                     LOGGER.info("APNs setup for sandbox");
                     apnsServiceBuilder.withSandboxDestination();
