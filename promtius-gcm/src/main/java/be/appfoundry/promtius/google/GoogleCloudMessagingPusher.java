@@ -56,7 +56,7 @@ public final class GoogleCloudMessagingPusher<CT extends ClientToken<String, P>,
     }
 
     private void pushPayloadToClientsIdentifiedByTokens(final PushPayload payload, final List<CT> tokens) {
-        Message message = new Message.Builder().addData("message", payload.getMessage()).collapseKey(COLLAPSE_KEY).build();
+        Message message = new Message.Builder().addData("message", payload.getMessage()).addData("sound", payload.getSound()).collapseKey(COLLAPSE_KEY).build();
         List<String> partialDeviceIds = new ArrayList<>();
         int counter = 0;
         for (ClientToken<String, P> token : tokens) {

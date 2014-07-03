@@ -70,7 +70,7 @@ public class GoogleCloudMessagingPusherTest {
 
     @Test
     public void test_sendPush() throws Exception {
-        PushPayload payload = new PushPayload("message");
+        PushPayload payload = new PushPayload.Builder().withMessage("message").withSound("sound").build();
         List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
         when(tokenA.getToken()).thenReturn("token1");
@@ -82,6 +82,7 @@ public class GoogleCloudMessagingPusherTest {
 
         Message message = messageCaptor.getValue();
         assertThat(message.getData().get("message"), is("message"));
+        assertThat(message.getData().get("sound"), is("sound"));
         assertThat(message.getCollapseKey(), is("kolepski"));
         assertThat(message.getTimeToLive(), is(nullValue()));
 
@@ -92,7 +93,7 @@ public class GoogleCloudMessagingPusherTest {
 
     @Test
     public void test_sendPushToGroup() throws Exception {
-        PushPayload payload = new PushPayload("message");
+        PushPayload payload = new PushPayload.Builder().withMessage("message").build();
         List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
         when(tokenA.getToken()).thenReturn("token1");
@@ -107,6 +108,7 @@ public class GoogleCloudMessagingPusherTest {
 
         Message message = messageCaptor.getValue();
         assertThat(message.getData().get("message"), is("message"));
+        assertThat(message.getData().get("sound"), is(PushPayload.DEFAULT_SOUND_VALUE));
         assertThat(message.getCollapseKey(), is("kolepski"));
         assertThat(message.getTimeToLive(), is(nullValue()));
 
@@ -117,7 +119,7 @@ public class GoogleCloudMessagingPusherTest {
 
     @Test(expected = PushFailedException.class)
     public void test_sendPush_onIOException() throws Exception {
-        PushPayload payload = new PushPayload("message");
+        PushPayload payload = new PushPayload.Builder().withMessage("message").build();
         List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
         when(wrapper.send(Mockito.any(Message.class), anyList(), anyInt())).thenThrow(new IOException());

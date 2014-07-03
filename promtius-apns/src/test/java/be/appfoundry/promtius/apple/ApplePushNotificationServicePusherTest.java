@@ -12,9 +12,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -22,9 +22,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.contains;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,25 +64,25 @@ public class ApplePushNotificationServicePusherTest {
 
     @Test
     public void test_sendPush() throws Exception {
-        PushPayload payload = new PushPayload("message");
+        PushPayload payload = new PushPayload.Builder().withMessage("message").withSound("sound").build();
         List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
 
         pusher.sendPush(payload);
 
-        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), contains("message"));
+        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), argThat(allOf(containsString("message"), containsString("sound"))));
     }
 
     @Test
     public void test_sendPushToGroup() throws Exception {
-        PushPayload payload = new PushPayload("message");
+        PushPayload payload = new PushPayload.Builder().withMessage("message").build();
         List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
         final Collection<String> groups = Arrays.asList("groupA", "groupB");
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM, groups)).thenReturn(tokens);
 
         pusher.sendPush(payload, groups);
 
-        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), contains("message"));
+        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), argThat(allOf(containsString("message"), containsString(PushPayload.DEFAULT_SOUND_VALUE))));
     }
 
     @Test

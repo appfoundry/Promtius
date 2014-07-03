@@ -66,7 +66,7 @@ public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P
             }
         });
 
-        String payloadAsString = APNS.newPayload().alertBody(payload.getMessage()).build();
+        String payloadAsString = APNS.newPayload().alertBody(payload.getMessage()).sound(payload.getSound()).build();
         apnsService.push(tokenIds, payloadAsString);
     }
 
