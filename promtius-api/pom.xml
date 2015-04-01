@@ -6,7 +6,7 @@
     <parent>
         <groupId>be.appfoundry.promtius</groupId>
         <artifactId>promtius-parent</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
     </parent>
 
     <artifactId>promtius-api</artifactId>
