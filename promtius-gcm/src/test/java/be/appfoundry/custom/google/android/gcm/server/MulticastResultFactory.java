@@ -1,9 +1,13 @@
-package com.google.android.gcm.server;
+package be.appfoundry.custom.google.android.gcm.server;
+
+import be.appfoundry.custom.google.android.gcm.server.MulticastResult;
+import be.appfoundry.custom.google.android.gcm.server.Result;
 
 import java.util.List;
 
 /**
  * This class is provided so we can use the {@link com.google.android.gcm.server.Result.Builder}, which is package private.
+ *
  * @author Mike Seghers
  */
 public class MulticastResultFactory {
@@ -12,7 +16,7 @@ public class MulticastResultFactory {
         for (Result result : results) {
             builder.addResult(result);
         }
-        return  builder.build();
+        return builder.build();
     }
 
     public static Result getResult(String canonicalId, String errorCode, String messageId) {

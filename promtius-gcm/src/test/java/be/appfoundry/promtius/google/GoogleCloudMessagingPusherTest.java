@@ -1,14 +1,14 @@
 package be.appfoundry.promtius.google;
 
+import be.appfoundry.custom.google.android.gcm.server.Constants;
+import be.appfoundry.custom.google.android.gcm.server.Message;
+import be.appfoundry.custom.google.android.gcm.server.MulticastResult;
+import be.appfoundry.custom.google.android.gcm.server.Result;
 import be.appfoundry.promtius.ClientToken;
 import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
 import be.appfoundry.promtius.PushPayload;
 import be.appfoundry.promtius.exception.PushFailedException;
-import com.google.android.gcm.server.Constants;
-import com.google.android.gcm.server.Message;
-import com.google.android.gcm.server.MulticastResult;
-import com.google.android.gcm.server.Result;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,16 +24,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import static com.google.android.gcm.server.MulticastResultFactory.getMulticastResultBuilder;
-import static com.google.android.gcm.server.MulticastResultFactory.getResult;
+import static be.appfoundry.custom.google.android.gcm.server.MulticastResultFactory.getMulticastResultBuilder;
+import static be.appfoundry.custom.google.android.gcm.server.MulticastResultFactory.getResult;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.eq;
@@ -87,9 +91,8 @@ public class GoogleCloudMessagingPusherTest {
         verify(wrapper).send(messageCaptor.capture(), deviceIdCaptor.capture(), eq(5));
 
         Message message = messageCaptor.getValue();
-        assertThat(message.getData().get("message"), is("message"));
-        assertThat(message.getData().get("sound"), is("sound"));
-        assertThat(message.getCollapseKey(), is("kolepski"));
+        assertThat(message.getData().get("message"), is((Object)"message"));
+        assertThat(message.getData().get("sound"), is((Object)"sound"));
         assertThat(message.getTimeToLive(), is(nullValue()));
 
         List<String> deviceIds = deviceIdCaptor.getValue();
@@ -112,14 +115,58 @@ public class GoogleCloudMessagingPusherTest {
         verify(wrapper).send(messageCaptor.capture(), deviceIdCaptor.capture(), eq(5));
 
         Message message = messageCaptor.getValue();
-        assertThat(message.getData().get("message"), is("message"));
-        assertThat(message.getData().get("sound"), is(PushPayload.DEFAULT_SOUND_VALUE));
-        assertThat(message.getCollapseKey(), is("kolepski"));
+        assertThat(message.getData().get("message"), is((Object)"message"));
+        assertThat(message.getData().get("sound"), is((Object)PushPayload.DEFAULT_SOUND_VALUE));
         assertThat(message.getTimeToLive(), is(nullValue()));
 
         List<String> deviceIds = deviceIdCaptor.getValue();
         assertThat(deviceIds, hasSize(2));
         assertThat(deviceIds, hasItems("token1", "token2"));
+    }
+
+    @Test
+    public void test_sendPush_setsCustomFieldsMap() throws Exception {
+        final List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        final Map<String, Object> map = new HashMap<>();
+        final Map<String, String> innerMap = new HashMap<>();
+        map.put("custom", innerMap);
+        PushPayload payload = new PushPayload.Builder().withMessage("message").withCustomFields(map).build();
+
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        pusher.sendPush(payload);
+
+        ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
+        verify(wrapper).send(messageCaptor.capture(), anyListOf(String.class), any(Integer.class));
+
+        Message message = messageCaptor.getValue();
+        assertThat(message.getData().get("data"), is(equalTo((Object) map)));
+    }
+
+    @Test
+    public void test_sendPush_considersTTL() throws Exception {
+        final List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        PushPayload payload = new PushPayload.Builder().withMessage("message").withTimeToLive(10).build();
+        pusher.sendPush(payload);
+
+
+        ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
+        verify(wrapper).send(messageCaptor.capture(), anyListOf(String.class), any(Integer.class));
+        Message message = messageCaptor.getValue();
+        assertThat(message.getTimeToLive(), is(equalTo(600)));
+    }
+
+    @Test
+    public void test_sendPush_setDiscrimimatorAsCollapseKey() throws Exception {
+        final List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        pusher.sendPush(payload);
+
+
+        ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
+        verify(wrapper).send(messageCaptor.capture(), anyListOf(String.class), any(Integer.class));
+        Message message = messageCaptor.getValue();
+        assertThat(message.getCollapseKey(), is(equalTo(PushPayload.DEFAULT_DISCRIMINATOR_VALUE)));
     }
 
     @Test(expected = PushFailedException.class)

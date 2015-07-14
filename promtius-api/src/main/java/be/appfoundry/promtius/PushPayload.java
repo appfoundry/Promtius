@@ -29,22 +29,37 @@ public class PushPayload {
     private PushPayload() {
     }
 
+    /**
+     * The main message to be pushed
+     */
     public String getMessage() {
         return message;
     }
 
+    /**
+     * The sound to be played with the push notification
+     */
     public String getSound() {
         return sound;
     }
 
+    /**
+     * The optional time-to-live of the message, in minutes.
+     */
     public Optional<Integer> getTimeToLive() {
         return timeToLive;
     }
 
+    /**
+     * Custom fields that are added to the payload.
+     */
     public Optional<Map<String, ?>> getCustomFields() {
         return customFields;
     }
 
+    /**
+     * A filter/collapse value to be used to group messages together. This is not supported by all providers.
+     */
     public String getDiscriminator() {
         return discriminator;
     }

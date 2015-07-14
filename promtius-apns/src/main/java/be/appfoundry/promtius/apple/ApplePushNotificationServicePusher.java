@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
+import com.notnoop.apns.PayloadBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,8 +72,18 @@ public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P
         });
 
         LOGGER.debug("Pushing payload to {} devices", tokenIds.size());
-        String payloadAsString = APNS.newPayload().alertBody(payload.getMessage()).sound(payload.getSound()).build();
-        apnsService.push(tokenIds, payloadAsString);
+        PayloadBuilder builder = APNS.newPayload().alertBody(payload.getMessage()).sound(payload.getSound());
+        if (payload.getCustomFields().isPresent()) {
+            builder.customFields(payload.getCustomFields().get());
+        }
+        String payloadAsString = builder.build();
+        if (payload.getTimeToLive().isPresent()) {
+            int offset = payload.getTimeToLive().get();
+
+            apnsService.push(tokenIds, payloadAsString, new Date(System.currentTimeMillis() + (offset * 60 *  1000)));
+        } else {
+            apnsService.push(tokenIds, payloadAsString);
+        }
     }
 
     private void unregisterInactiveDevices() {

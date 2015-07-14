@@ -1,7 +1,7 @@
 package be.appfoundry.promtius.google;
 
-import com.google.android.gcm.server.Message;
-import com.google.android.gcm.server.MulticastResult;
+import be.appfoundry.custom.google.android.gcm.server.Message;
+import be.appfoundry.custom.google.android.gcm.server.MulticastResult;
 
 import java.io.IOException;
 import java.util.List;

@@ -13,7 +13,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
@@ -23,12 +22,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import static org.exparity.hamcrest.date.DateMatchers.within;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
@@ -72,7 +73,33 @@ public class ApplePushNotificationServicePusherTest {
 
         pusher.sendPush(payload);
 
-        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), argThat(allOf(containsString("message"), containsString("sound"))));
+        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), argThat(allOf(containsString("\"message\""), containsString("\"sound\""))));
+    }
+
+    @Test
+    public void test_sendPush_setsCustomFieldsMap() throws Exception {
+        final Map<String, Object> map = new HashMap<>();
+        final Map<String, String> innerMap = new HashMap<>();
+        map.put("custom", innerMap);
+        PushPayload payload = new PushPayload.Builder().withMessage("message").withCustomFields(map).build();
+        List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+
+        pusher.sendPush(payload);
+
+        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), argThat(allOf(containsString("\"custom\":{}"))));
+    }
+
+    @Test
+    public void test_sendPush_considersTTL() throws Exception {
+        PushPayload payload = new PushPayload.Builder().withMessage("message").withTimeToLive(10).build();
+        List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+
+        pusher.sendPush(payload);
+
+        Date ttlDate = new Date(System.currentTimeMillis() + 600000);
+        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), any(String.class), argThat(within(1, TimeUnit.SECONDS, ttlDate)));
     }
 
     @Test

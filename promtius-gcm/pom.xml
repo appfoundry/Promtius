@@ -24,8 +24,8 @@
             <artifactId>guava</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.ganyo</groupId>
-            <artifactId>gcm-server</artifactId>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

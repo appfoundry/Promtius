@@ -1,15 +1,15 @@
 package be.appfoundry.promtius.google;
 
+import be.appfoundry.custom.google.android.gcm.server.Constants;
+import be.appfoundry.custom.google.android.gcm.server.Message;
+import be.appfoundry.custom.google.android.gcm.server.MulticastResult;
+import be.appfoundry.custom.google.android.gcm.server.Result;
 import be.appfoundry.promtius.ClientToken;
 import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
 import be.appfoundry.promtius.PushPayload;
 import be.appfoundry.promtius.Pusher;
 import be.appfoundry.promtius.exception.PushFailedException;
-import com.google.android.gcm.server.Constants;
-import com.google.android.gcm.server.Message;
-import com.google.android.gcm.server.MulticastResult;
-import com.google.android.gcm.server.Result;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,7 +31,6 @@ import java.util.Set;
 public final class GoogleCloudMessagingPusher<CT extends ClientToken<String, P>, P, G> implements Pusher<P, G> {
     private static final Logger LOGGER = LoggerFactory.getLogger(GoogleCloudMessagingPusher.class);
 
-    public static final String COLLAPSE_KEY = "kolepski";
     public static final int MAX_MULTICAST_SIZE = 1000;
     private final GoogleSenderWrapper senderWrapper;
     private final ClientTokenService<CT, String, P, G> clientTokenService;
@@ -62,7 +62,19 @@ public final class GoogleCloudMessagingPusher<CT extends ClientToken<String, P>,
     }
 
     private void pushPayloadToClientsIdentifiedByTokens(final PushPayload payload, final List<CT> tokens) {
-        Message message = new Message.Builder().addData("message", payload.getMessage()).addData("sound", payload.getSound()).collapseKey(COLLAPSE_KEY).build();
+        Message.Builder builder = new Message.Builder().addData("message", payload.getMessage()).addData("sound", payload.getSound()).collapseKey(payload.getDiscriminator());
+        if (payload.getCustomFields().isPresent()) {
+            Map<String, ?> customFields = payload.getCustomFields().get();
+            builder.addData("data", customFields);
+        }
+        if (payload.getTimeToLive().isPresent()) {
+            Integer ttl = payload.getTimeToLive().get();
+            builder.timeToLive(ttl * 60);
+
+        }
+        Message message = builder.build();
+
+
         List<String> partialDeviceIds = new ArrayList<>();
         int counter = 0;
         for (ClientToken<String, P> token : tokens) {

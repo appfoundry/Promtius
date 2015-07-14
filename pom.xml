@@ -11,12 +11,13 @@
 
     <properties>
         <guava.version>16.0.1</guava.version>
-        <gcm-server.version>1.0.2</gcm-server.version>
         <apns.version>0.2.3</apns.version>
         <slf4j.version>1.7.6</slf4j.version>
         <junit.version>4.11</junit.version>
         <mockito.version>1.9.5</mockito.version>
         <hamcrest.version>1.3</hamcrest.version>
+        <hamcrest-date.version>1.1.0</hamcrest-date.version>
+        <json-simple.version>1.1</json-simple.version>
     </properties>
 
 
@@ -69,9 +70,9 @@
                 <version>${guava.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.ganyo</groupId>
-                <artifactId>gcm-server</artifactId>
-                <version>${gcm-server.version}</version>
+                <groupId>com.googlecode.json-simple</groupId>
+                <artifactId>json-simple</artifactId>
+                <version>${json-simple.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.notnoop.apns</groupId>
@@ -106,6 +107,13 @@
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-library</artifactId>
                 <version>${hamcrest.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.exparity</groupId>
+                <artifactId>hamcrest-date</artifactId>
+                <version>${hamcrest-date.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
