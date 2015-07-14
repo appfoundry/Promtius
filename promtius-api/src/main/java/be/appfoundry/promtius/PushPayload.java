@@ -1,6 +1,9 @@
 package be.appfoundry.promtius;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+
+import java.util.Map;
 
 /**
  * @author Mike Seghers
@@ -8,8 +11,12 @@ import com.google.common.base.Optional;
 public class PushPayload {
 
     public static final String DEFAULT_SOUND_VALUE = "default";
+    public static final String DEFAULT_DISCRIMINATOR_VALUE = "discriminator";
     private String message;
     private String sound;
+    private String discriminator;
+    private Optional<Map<String, ?>> customFields;
+    private Optional<Integer> timeToLive;
 
     /**
      * @deprecated use the {@link be.appfoundry.promtius.PushPayload.Builder} to create new instances instead!
@@ -30,12 +37,27 @@ public class PushPayload {
         return sound;
     }
 
+    public Optional<Integer> getTimeToLive() {
+        return timeToLive;
+    }
+
+    public Optional<Map<String, ?>> getCustomFields() {
+        return customFields;
+    }
+
+    public String getDiscriminator() {
+        return discriminator;
+    }
+
     public static class Builder {
-        private Optional<String> message = Optional.absent();
+        private String message;
         private Optional<String> sound = Optional.absent();
+        private Optional<Integer> timeToLive = Optional.absent();
+        private Optional<Map<String, ?>> customFields = Optional.absent();
+        private Optional<String> discriminator = Optional.absent();
 
         public Builder withMessage(final String message) {
-            this.message = Optional.of(message);
+            this.message = message;
             return this;
         }
 
@@ -44,10 +66,30 @@ public class PushPayload {
             return this;
         }
 
+        public Builder withTimeToLive(final int timeToLive) {
+            this.timeToLive = Optional.of(timeToLive);
+            return this;
+        }
+
+        public Builder withCustomFields(final Map<String, ?> customFields) {
+            this.customFields = Optional.<Map<String, ?>>of(customFields);
+            return this;
+        }
+
+
+        public Builder withDiscriminator(final String discriminator) {
+            this.discriminator = Optional.of(discriminator);
+            return this;
+        }
+
         public PushPayload build() {
+            Preconditions.checkState(message != null);
             PushPayload pushPayload = new PushPayload();
-            pushPayload.message = this.message.get();
+            pushPayload.message = this.message;
             pushPayload.sound = this.sound.or(DEFAULT_SOUND_VALUE);
+            pushPayload.timeToLive = this.timeToLive;
+            pushPayload.customFields = this.customFields;
+            pushPayload.discriminator = this.discriminator.or(DEFAULT_DISCRIMINATOR_VALUE);
             return pushPayload;
         }
     }

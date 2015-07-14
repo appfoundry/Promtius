@@ -11,6 +11,7 @@ import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.MulticastResult;
 import com.google.android.gcm.server.Result;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @param <CT> The type of ClientTokens this pusher is using
@@ -128,7 +130,7 @@ public final class GoogleCloudMessagingPusher<CT extends ClientToken<String, P>,
 
 
     @Override
-    public P getPlatform() {
-        return platform;
+    public Set<P> getPlatforms() {
+        return ImmutableSet.of(platform);
     }
 }

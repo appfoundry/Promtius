@@ -20,4 +20,14 @@ public interface PushAggregator<P, G> {
      * Send the payload to the registered clients within the specified group. Get notified on the progress in the given callback.
      */
     void sendPush(PushPayload payload, Collection<G> groups, PusherAggregatorTracker callback);
+
+    /**
+     * Send the payload to the registered clients for the given platforms. Get notified on the progress in the given callback.
+     */
+    void sendPushToPlatforms(PushPayload payload, Collection<P> platforms, PusherAggregatorTracker callback);
+
+    /**
+     * Send the payload to the registered clients within the specified group for the given platforms. Get notified on the progress in the given callback.
+     */
+    void sendPushToPlatforms(PushPayload payload, Collection<P> platforms, Collection<G> groups, PusherAggregatorTracker callback);
 }

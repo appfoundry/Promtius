@@ -1,6 +1,7 @@
 package be.appfoundry.promtius;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * A pusher is capable of pushing a {@link PushPayload} to a specific client platform.
@@ -25,8 +26,8 @@ public interface Pusher<P, G> {
     void sendPush(PushPayload payload, Collection<G> groups);
 
     /**
-     * Returns the platform identifier for which this pusher is working.
+     * Returns the platform identifiers for which this pusher is working.
      */
-    P getPlatform();
+    Set<P> getPlatforms();
 
 }

@@ -6,6 +6,7 @@ import be.appfoundry.promtius.ClientTokenService;
 import be.appfoundry.promtius.PushPayload;
 import be.appfoundry.promtius.Pusher;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
@@ -16,6 +17,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A {@link be.appfoundry.promtius.Pusher} capable of sending payload via Apple's Push Notification Services.
@@ -46,6 +48,7 @@ public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P
     public void sendPush(final PushPayload payload) {
         LOGGER.info("Sending payload ({}) to APNs", payload);
         unregisterInactiveDevices();
+        LOGGER.debug("Inactive devices unregistered - starting actual push now");
         pushPayloadToClientsIdentifiedByTokens(payload, clientTokenService.findClientTokensForOperatingSystem(platform));
         LOGGER.info("APNs push finished", payload);
     }
@@ -54,6 +57,7 @@ public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P
     public void sendPush(final PushPayload payload, final Collection<G> groups) {
         LOGGER.info("Sending payload ({}) to APNs", payload);
         unregisterInactiveDevices();
+        LOGGER.debug("Inactive devices unregistered - starting actual push now");
         pushPayloadToClientsIdentifiedByTokens(payload, clientTokenService.findClientTokensForOperatingSystem(platform, groups));
         LOGGER.info("APNs push finished", payload);
     }
@@ -80,7 +84,7 @@ public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P
     }
 
     @Override
-    public P getPlatform() {
-        return platform;
+    public Set<P> getPlatforms() {
+        return ImmutableSet.of(platform);
     }
 }

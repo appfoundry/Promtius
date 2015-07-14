@@ -9,6 +9,7 @@ import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.MulticastResult;
 import com.google.android.gcm.server.Result;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,7 +23,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.google.android.gcm.server.MulticastResultFactory.getMulticastResultBuilder;
 import static com.google.android.gcm.server.MulticastResultFactory.getResult;
@@ -32,7 +35,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -63,9 +66,12 @@ public class GoogleCloudMessagingPusherTest {
     @Captor
     private ArgumentCaptor<ClientToken<String, String>> tokenCaptor;
 
+    private PushPayload payload;
+
     @Before
     public void setUp() throws Exception {
         pusher = new GoogleCloudMessagingPusher<>(wrapper, clientTokenService, clientTokenFactory, TEST_PLATFORM);
+        payload = new PushPayload.Builder().withMessage("message").build();
     }
 
     @Test
@@ -93,7 +99,6 @@ public class GoogleCloudMessagingPusherTest {
 
     @Test
     public void test_sendPushToGroup() throws Exception {
-        PushPayload payload = new PushPayload.Builder().withMessage("message").build();
         List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
         when(tokenA.getToken()).thenReturn("token1");
@@ -122,7 +127,7 @@ public class GoogleCloudMessagingPusherTest {
         PushPayload payload = new PushPayload.Builder().withMessage("message").build();
         List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
-        when(wrapper.send(Mockito.any(Message.class), anyList(), anyInt())).thenThrow(new IOException());
+        when(wrapper.send(Mockito.any(Message.class), anyListOf(String.class), anyInt())).thenThrow(new IOException());
 
         pusher.sendPush(payload);
     }
@@ -136,7 +141,7 @@ public class GoogleCloudMessagingPusherTest {
         when(tokenA.getToken()).thenReturn("token");
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
 
-        pusher.sendPush(new PushPayload("message"));
+        pusher.sendPush(payload);
 
 
         verify(wrapper, times(3)).send(Mockito.any(Message.class), deviceIdCaptor.capture(), anyInt());
@@ -149,17 +154,17 @@ public class GoogleCloudMessagingPusherTest {
 
     @Test
     public void test_multicastReturnEvaluated_cannonicalReplacement() throws Exception {
-        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA);
-        List<Result> results = Arrays.asList(getResult("newToken", "err", "1"));
+        List<ClientToken<String, String>> tokens = Collections.singletonList(tokenA);
+        List<Result> results = Collections.singletonList(getResult("newToken", "err", "1"));
         MulticastResult expected = getMulticastResultBuilder(50, 50, 20, 1, results);
 
         when(tokenA.getToken()).thenReturn("oldToken");
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
-        when(wrapper.send(Mockito.any(Message.class), anyList(), anyInt())).thenReturn(expected);
+        when(wrapper.send(Mockito.any(Message.class), anyListOf(String.class), anyInt())).thenReturn(expected);
         when(clientTokenFactory.createClientToken("oldToken", TEST_PLATFORM)).thenReturn(tokenB);
         when(clientTokenFactory.createClientToken("newToken", TEST_PLATFORM)).thenReturn(tokenA);
 
-        pusher.sendPush(new PushPayload("message"));
+        pusher.sendPush(payload);
 
         verify(clientTokenService).unregisterClientToken(tokenCaptor.capture());
         assertThat(tokenCaptor.getValue(), is(tokenB));
@@ -169,24 +174,25 @@ public class GoogleCloudMessagingPusherTest {
 
     @Test
     public void test_multicastReturnEvaluated_removal() throws Exception {
-        List<ClientToken<String, String>> tokens = Arrays.asList(tokenA);
-        List<Result> results = Arrays.asList(getResult(null, Constants.ERROR_NOT_REGISTERED, null));
+        List<ClientToken<String, String>> tokens = Collections.singletonList(tokenA);
+        List<Result> results = Collections.singletonList(getResult(null, Constants.ERROR_NOT_REGISTERED, null));
         MulticastResult expected = getMulticastResultBuilder(50, 50, 20, 1, results);
 
         when(tokenA.getToken()).thenReturn("oldToken");
         when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
-        when(wrapper.send(Mockito.any(Message.class), anyList(), anyInt())).thenReturn(expected);
+        when(wrapper.send(Mockito.any(Message.class), anyListOf(String.class), anyInt())).thenReturn(expected);
         when(clientTokenFactory.createClientToken("oldToken", TEST_PLATFORM)).thenReturn(tokenB);
 
-        pusher.sendPush(new PushPayload("message"));
+        pusher.sendPush(payload);
 
         verify(clientTokenService).unregisterClientToken(tokenCaptor.capture());
         assertThat(tokenCaptor.getValue(), is(tokenB));
-        verify(clientTokenService, never()).registerClientToken(Mockito.any(ClientToken.class));
+        verify(clientTokenService, never()).registerClientToken(Mockito.<ClientToken<String, String>>any());
     }
 
     @Test
     public void test_getPlatform() throws Exception {
-        assertThat(pusher.getPlatform(), is(TEST_PLATFORM));
+        Set<String> singletonSet = ImmutableSet.of(TEST_PLATFORM);
+        assertThat(pusher.getPlatforms(), is(singletonSet));
     }
 }

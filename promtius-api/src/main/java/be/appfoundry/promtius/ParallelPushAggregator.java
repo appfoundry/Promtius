@@ -1,5 +1,10 @@
 package be.appfoundry.promtius;
 
+import be.appfoundry.promtius.exception.PushFailedException;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFutureTask;
@@ -33,16 +38,38 @@ public class ParallelPushAggregator<P, G> implements PushAggregator<P, G> {
     @Override
     public void sendPush(final PushPayload payload, final PusherAggregatorTracker tracker) {
         LOGGER.debug("Sending payload via parallel aggregator");
-        sendPushUsingStrategy(tracker, new AllPushStrategy<P, G>(payload));
+        sendPushUsingStrategy(tracker, new AllPushStrategy<P, G>(payload), pusherRegistry);
     }
 
     @Override
     public void sendPush(final PushPayload payload, final Collection<G> groups, final PusherAggregatorTracker tracker) {
         LOGGER.debug("Sending payload via parallel aggregator for groups");
-        sendPushUsingStrategy(tracker, new GroupPushStrategy<P, G>(payload, groups));
+        sendPushUsingStrategy(tracker, new GroupPushStrategy<P, G>(payload, groups), pusherRegistry);
     }
 
-    private void sendPushUsingStrategy(final PusherAggregatorTracker tracker, final PushStrategy<P, G> pushStrategy) {
+    @Override
+    public void sendPushToPlatforms(final PushPayload payload, final Collection<P> platforms, final PusherAggregatorTracker tracker) {
+        LOGGER.debug("Sending payload via parallel aggregator to specific platforms");
+        Set<Pusher<P, G>> pushers = getPushersForPlatformsOrFailTrying(platforms);
+        sendPushUsingStrategy(tracker, new AllPushStrategy<P, G>(payload), pushers);
+    }
+
+    @Override
+    public void sendPushToPlatforms(final PushPayload payload, final Collection<P> platforms, final Collection<G> groups, final PusherAggregatorTracker tracker) {
+        LOGGER.debug("Sending payload via parallel aggregator to specific platforms for groups");
+        Set<Pusher<P, G>> pushers = getPushersForPlatformsOrFailTrying(platforms);
+        sendPushUsingStrategy(tracker, new GroupPushStrategy<P, G>(payload, groups), pushers);
+    }
+
+    private Set<Pusher<P, G>> getPushersForPlatformsOrFailTrying(final Collection<P> platforms) {
+        Set<Pusher<P, G>> pushers = Sets.filter(pusherRegistry, new PlatformFilter(platforms));
+        if (pushers.isEmpty()) {
+            throw new PushFailedException("Could not find any pusher in the configured pusher registry for the given platforms (" + platforms + ")");
+        }
+        return pushers;
+    }
+
+    private void sendPushUsingStrategy(final PusherAggregatorTracker tracker, final PushStrategy<P, G> pushStrategy, final Set<Pusher<P, G>> pusherRegistry) {
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(pusherRegistry.size()));
         PusherAggregatorTaskCallback callback = new PusherAggregatorTaskCallback(tracker, pusherRegistry.size());
         for (final Pusher<P, G> p : pusherRegistry) {
@@ -136,6 +163,24 @@ public class ParallelPushAggregator<P, G> implements PushAggregator<P, G> {
                     pusher.sendPush(payload);
                 }
             };
+        }
+    }
+
+    private class PlatformFilter implements Predicate<Pusher<P, G>> {
+        private Collection<P> platformsToKeep;
+
+        public PlatformFilter(final Collection<P> platformsToKeep) {
+            this.platformsToKeep = platformsToKeep;
+        }
+
+        @Override
+        public boolean apply(final Pusher<P, G> input) {
+            for (P platform : input.getPlatforms()) {
+                if (platformsToKeep.contains(platform)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

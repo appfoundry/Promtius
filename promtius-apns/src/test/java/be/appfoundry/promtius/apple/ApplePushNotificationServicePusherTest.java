@@ -5,6 +5,7 @@ import be.appfoundry.promtius.ClientToken;
 import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
 import be.appfoundry.promtius.PushPayload;
+import com.google.common.collect.ImmutableSet;
 import com.notnoop.apns.ApnsService;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
@@ -94,7 +96,7 @@ public class ApplePushNotificationServicePusherTest {
         when(clientTokenFactory.createClientToken("token1", TEST_PLATFORM)).thenReturn(tokenA);
         when(clientTokenFactory.createClientToken("token2", TEST_PLATFORM)).thenReturn(tokenB);
 
-        PushPayload payload = new PushPayload("message");
+        PushPayload payload = new PushPayload.Builder().withMessage("message").build();
         pusher.sendPush(payload);
 
         verify(clientTokenService, times(2)).unregisterClientToken(pushTokenCaptor.capture());
@@ -105,7 +107,8 @@ public class ApplePushNotificationServicePusherTest {
 
     @Test
     public void test_getPlatform() throws Exception {
-        assertThat(pusher.getPlatform(), is(TEST_PLATFORM));
+        Set<String> singletonSet = ImmutableSet.of(TEST_PLATFORM);
+        assertThat(pusher.getPlatforms(), is(singletonSet));
     }
 
     private static class TestClientToken implements ClientToken<String, String> {
