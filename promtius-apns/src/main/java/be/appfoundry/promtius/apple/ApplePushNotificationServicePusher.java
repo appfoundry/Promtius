@@ -48,8 +48,12 @@ public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P
     @Override
     public void sendPush(final PushPayload payload) {
         LOGGER.info("Sending payload ({}) to APNs", payload);
-        unregisterInactiveDevices();
-        LOGGER.debug("Inactive devices unregistered - starting actual push now");
+        try {
+            unregisterInactiveDevices();
+            LOGGER.debug("Inactive devices unregistered - starting actual push now");
+        } catch (Throwable t) {
+            LOGGER.error("Unregistering devices failed - still trying to push though.", t);
+        }
         pushPayloadToClientsIdentifiedByTokens(payload, clientTokenService.findClientTokensForOperatingSystem(platform));
         LOGGER.info("APNs push finished", payload);
     }

@@ -106,7 +106,7 @@ public class ParallelPushAggregator<P, G> implements PushAggregator<P, G> {
 
         @Override
         public synchronized void onFailure(final Throwable t) {
-            LOGGER.debug("Push failure received", t);
+            LOGGER.error("Push failure received", t);
             failureCount++;
             markDelegateWhenFinished();
         }

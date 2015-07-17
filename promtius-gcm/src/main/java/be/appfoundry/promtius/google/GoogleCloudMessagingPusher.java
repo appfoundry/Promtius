@@ -55,10 +55,10 @@ public final class GoogleCloudMessagingPusher<CT extends ClientToken<String, P>,
 
     @Override
     public void sendPush(final PushPayload payload, final Collection<G> groups) {
-        LOGGER.info("Sending group payload ({}) APNs", payload);
+        LOGGER.info("Sending payload ({}) to groups {}", payload, groups);
         List<CT> tokens = clientTokenService.findClientTokensForOperatingSystem(platform, groups);
         pushPayloadToClientsIdentifiedByTokens(payload, tokens);
-        LOGGER.info("APNs group push finished", payload);
+        LOGGER.info("GCM group push finished", payload);
     }
 
     private void pushPayloadToClientsIdentifiedByTokens(final PushPayload payload, final List<CT> tokens) {
