@@ -15,6 +15,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -136,6 +137,16 @@ public class ApplePushNotificationServicePusherTest {
     public void test_getPlatform() throws Exception {
         Set<String> singletonSet = ImmutableSet.of(TEST_PLATFORM);
         assertThat(pusher.getPlatforms(), is(singletonSet));
+    }
+
+    @Test
+    public void test_whenUnregistrationFails_pushStillContinues() throws Exception {
+        List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(apnsService.getInactiveDevices()).thenThrow(new RuntimeException());
+        PushPayload payload = new PushPayload.Builder().withMessage("message").build();
+        pusher.sendPush(payload);
+        verify(apnsService).push(eq(Arrays.asList("token1", "token2")), argThat(allOf(containsString("message"), containsString(PushPayload.DEFAULT_SOUND_VALUE))));
     }
 
     private static class TestClientToken implements ClientToken<String, String> {

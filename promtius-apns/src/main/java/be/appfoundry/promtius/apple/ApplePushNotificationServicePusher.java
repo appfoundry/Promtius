@@ -48,12 +48,7 @@ public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P
     @Override
     public void sendPush(final PushPayload payload) {
         LOGGER.info("Sending payload ({}) to APNs", payload);
-        try {
-            unregisterInactiveDevices();
-            LOGGER.debug("Inactive devices unregistered - starting actual push now");
-        } catch (Throwable t) {
-            LOGGER.error("Unregistering devices failed - still trying to push though.", t);
-        }
+        unregisterInactiveDevices();
         pushPayloadToClientsIdentifiedByTokens(payload, clientTokenService.findClientTokensForOperatingSystem(platform));
         LOGGER.info("APNs push finished", payload);
     }
@@ -84,17 +79,22 @@ public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P
         if (payload.getTimeToLive().isPresent()) {
             int offset = payload.getTimeToLive().get();
 
-            apnsService.push(tokenIds, payloadAsString, new Date(System.currentTimeMillis() + (offset * 60 *  1000)));
+            apnsService.push(tokenIds, payloadAsString, new Date(System.currentTimeMillis() + (offset * 60 * 1000)));
         } else {
             apnsService.push(tokenIds, payloadAsString);
         }
     }
 
     private void unregisterInactiveDevices() {
-        Map<String, Date> inactiveDevices = apnsService.getInactiveDevices();
-        LOGGER.debug("Unregistering device tokens ({})", inactiveDevices);
-        for (String token : inactiveDevices.keySet()) {
-            clientTokenService.unregisterClientToken(clientTokenFactory.createClientToken(token, platform));
+        try {
+            Map<String, Date> inactiveDevices = apnsService.getInactiveDevices();
+            LOGGER.debug("Unregistering device tokens ({})", inactiveDevices);
+            for (String token : inactiveDevices.keySet()) {
+                clientTokenService.unregisterClientToken(clientTokenFactory.createClientToken(token, platform));
+            }
+            LOGGER.debug("Inactive devices unregistered - starting actual push now");
+        } catch (Throwable t) {
+            LOGGER.error("Unregistering devices failed - still trying to push though.", t);
         }
     }
 
