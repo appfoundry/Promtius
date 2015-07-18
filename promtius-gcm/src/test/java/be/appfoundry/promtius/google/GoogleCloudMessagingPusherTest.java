@@ -40,6 +40,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -213,10 +214,7 @@ public class GoogleCloudMessagingPusherTest {
 
         pusher.sendPush(payload);
 
-        verify(clientTokenService).unregisterClientToken(tokenCaptor.capture());
-        assertThat(tokenCaptor.getValue(), is(tokenB));
-        verify(clientTokenService).registerClientToken(tokenCaptor.capture());
-        assertThat(tokenCaptor.getValue(), is(tokenA));
+        verify(clientTokenService).changeClientToken(tokenB, "newToken");
     }
 
     @Test
@@ -232,9 +230,8 @@ public class GoogleCloudMessagingPusherTest {
 
         pusher.sendPush(payload);
 
-        verify(clientTokenService).unregisterClientToken(tokenCaptor.capture());
-        assertThat(tokenCaptor.getValue(), is(tokenB));
-        verify(clientTokenService, never()).registerClientToken(Mockito.<ClientToken<String, String>>any());
+        verify(clientTokenService).unregisterClientToken(tokenB);
+        verify(clientTokenService, never()).changeClientToken(Mockito.<ClientToken<String, String>>any(), anyString());
     }
 
     @Test

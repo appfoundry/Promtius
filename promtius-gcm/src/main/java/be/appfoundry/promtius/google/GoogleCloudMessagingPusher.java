@@ -136,8 +136,8 @@ public final class GoogleCloudMessagingPusher<CT extends ClientToken<String, P>,
     }
 
     private void replaceDeviceId(final String oldId, final String newId) {
-        clientTokenService.unregisterClientToken(clientTokenFactory.createClientToken(oldId, platform));
-        clientTokenService.registerClientToken(clientTokenFactory.createClientToken(newId, platform));
+        CT clientToken = clientTokenFactory.createClientToken(oldId, platform);
+        clientTokenService.changeClientToken(clientToken, newId);
     }
 
 

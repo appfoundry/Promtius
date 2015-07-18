@@ -19,14 +19,14 @@ public interface ClientTokenService<CT extends ClientToken<T, P>, T, P, G> {
     List<CT> findClientTokensForOperatingSystem(P platform);
 
     /**
-     * Registers a client token.
-     */
-    void registerClientToken(CT clientToken);
-
-    /**
      * Unregister a client token.
      */
     void unregisterClientToken(CT clientToken);
 
     List<CT> findClientTokensForOperatingSystem(P platform, Collection<G> groups);
+
+    /**
+     * Replace the existing token's token value with the given token value.
+     */
+    void changeClientToken(CT clientToken, T newTokenValue);
 }
