@@ -70,7 +70,7 @@ public class ApplePushNotificationServicePusherTest {
     public void test_sendPush() throws Exception {
         PushPayload payload = new PushPayload.Builder().withMessage("message").withSound("sound").build();
         List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
 
         pusher.sendPush(payload);
 
@@ -84,7 +84,7 @@ public class ApplePushNotificationServicePusherTest {
         map.put("custom", innerMap);
         PushPayload payload = new PushPayload.Builder().withMessage("message").withCustomFields(map).build();
         List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
 
         pusher.sendPush(payload);
 
@@ -95,7 +95,7 @@ public class ApplePushNotificationServicePusherTest {
     public void test_sendPush_considersTTL() throws Exception {
         PushPayload payload = new PushPayload.Builder().withMessage("message").withTimeToLive(10).build();
         List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
 
         pusher.sendPush(payload);
 
@@ -108,7 +108,7 @@ public class ApplePushNotificationServicePusherTest {
         PushPayload payload = new PushPayload.Builder().withMessage("message").build();
         List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
         final Collection<String> groups = Arrays.asList("groupA", "groupB");
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM, groups)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM, groups)).thenReturn(tokens);
 
         pusher.sendPush(payload, groups);
 
@@ -142,7 +142,7 @@ public class ApplePushNotificationServicePusherTest {
     @Test
     public void test_whenUnregistrationFails_pushStillContinues() throws Exception {
         List<TestClientToken> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
         when(apnsService.getInactiveDevices()).thenThrow(new RuntimeException());
         PushPayload payload = new PushPayload.Builder().withMessage("message").build();
         pusher.sendPush(payload);

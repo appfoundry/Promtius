@@ -48,7 +48,7 @@ public final class GoogleCloudMessagingPusher<CT extends ClientToken<String, P>,
     @Override
     public void sendPush(final PushPayload payload) {
         LOGGER.info("Sending payload ({}) to GCM", payload);
-        List<CT> tokens = clientTokenService.findClientTokensForOperatingSystem(platform);
+        List<CT> tokens = clientTokenService.findClientTokensForPlatform(platform);
         pushPayloadToClientsIdentifiedByTokens(payload, tokens);
         LOGGER.info("GCM push finished", payload);
     }
@@ -56,7 +56,7 @@ public final class GoogleCloudMessagingPusher<CT extends ClientToken<String, P>,
     @Override
     public void sendPush(final PushPayload payload, final Collection<G> groups) {
         LOGGER.info("Sending payload ({}) to groups {}", payload, groups);
-        List<CT> tokens = clientTokenService.findClientTokensForOperatingSystem(platform, groups);
+        List<CT> tokens = clientTokenService.findClientTokensForPlatform(platform, groups);
         pushPayloadToClientsIdentifiedByTokens(payload, tokens);
         LOGGER.info("GCM group push finished", payload);
     }

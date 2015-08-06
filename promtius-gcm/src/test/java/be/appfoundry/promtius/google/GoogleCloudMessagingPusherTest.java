@@ -83,7 +83,7 @@ public class GoogleCloudMessagingPusherTest {
     public void test_sendPush() throws Exception {
         PushPayload payload = new PushPayload.Builder().withMessage("message").withSound("sound").build();
         List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
         when(tokenA.getToken()).thenReturn("token1");
         when(tokenB.getToken()).thenReturn("token2");
         pusher.sendPush(payload);
@@ -104,11 +104,11 @@ public class GoogleCloudMessagingPusherTest {
     @Test
     public void test_sendPushToGroup() throws Exception {
         List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
         when(tokenA.getToken()).thenReturn("token1");
         when(tokenB.getToken()).thenReturn("token2");
         final Collection<String> groups = Arrays.asList("groupA", "groupB");
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM, groups)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM, groups)).thenReturn(tokens);
 
         pusher.sendPush(payload, groups);
 
@@ -133,7 +133,7 @@ public class GoogleCloudMessagingPusherTest {
         map.put("custom", innerMap);
         PushPayload payload = new PushPayload.Builder().withMessage("message").withCustomFields(map).build();
 
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
         pusher.sendPush(payload);
 
         ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
@@ -146,7 +146,7 @@ public class GoogleCloudMessagingPusherTest {
     @Test
     public void test_sendPush_considersTTL() throws Exception {
         final List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
         PushPayload payload = new PushPayload.Builder().withMessage("message").withTimeToLive(10).build();
         pusher.sendPush(payload);
 
@@ -160,7 +160,7 @@ public class GoogleCloudMessagingPusherTest {
     @Test
     public void test_sendPush_setDiscrimimatorAsCollapseKey() throws Exception {
         final List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
         pusher.sendPush(payload);
 
 
@@ -174,7 +174,7 @@ public class GoogleCloudMessagingPusherTest {
     public void test_sendPush_onIOException() throws Exception {
         PushPayload payload = new PushPayload.Builder().withMessage("message").build();
         List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
         when(wrapper.send(Mockito.any(Message.class), anyListOf(String.class), anyInt())).thenThrow(new IOException());
 
         pusher.sendPush(payload);
@@ -187,7 +187,7 @@ public class GoogleCloudMessagingPusherTest {
             tokens.add(tokenA);
         }
         when(tokenA.getToken()).thenReturn("token");
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
 
         pusher.sendPush(payload);
 
@@ -207,7 +207,7 @@ public class GoogleCloudMessagingPusherTest {
         MulticastResult expected = getMulticastResultBuilder(50, 50, 20, 1, results);
 
         when(tokenA.getToken()).thenReturn("oldToken");
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
         when(wrapper.send(Mockito.any(Message.class), anyListOf(String.class), anyInt())).thenReturn(expected);
         when(clientTokenFactory.createClientToken("oldToken", TEST_PLATFORM)).thenReturn(tokenB);
         when(clientTokenFactory.createClientToken("newToken", TEST_PLATFORM)).thenReturn(tokenA);
@@ -224,7 +224,7 @@ public class GoogleCloudMessagingPusherTest {
         MulticastResult expected = getMulticastResultBuilder(50, 50, 20, 1, results);
 
         when(tokenA.getToken()).thenReturn("oldToken");
-        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        when(clientTokenService.findClientTokensForPlatform(TEST_PLATFORM)).thenReturn(tokens);
         when(wrapper.send(Mockito.any(Message.class), anyListOf(String.class), anyInt())).thenReturn(expected);
         when(clientTokenFactory.createClientToken("oldToken", TEST_PLATFORM)).thenReturn(tokenB);
 

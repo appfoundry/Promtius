@@ -49,7 +49,7 @@ public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P
     public void sendPush(final PushPayload payload) {
         LOGGER.info("Sending payload ({}) to APNs", payload);
         unregisterInactiveDevices();
-        pushPayloadToClientsIdentifiedByTokens(payload, clientTokenService.findClientTokensForOperatingSystem(platform));
+        pushPayloadToClientsIdentifiedByTokens(payload, clientTokenService.findClientTokensForPlatform(platform));
         LOGGER.info("APNs push finished", payload);
     }
 
@@ -58,7 +58,7 @@ public class ApplePushNotificationServicePusher<CT extends ClientToken<String, P
         LOGGER.info("Sending payload ({}) to APNs", payload);
         unregisterInactiveDevices();
         LOGGER.debug("Inactive devices unregistered - starting actual push now");
-        pushPayloadToClientsIdentifiedByTokens(payload, clientTokenService.findClientTokensForOperatingSystem(platform, groups));
+        pushPayloadToClientsIdentifiedByTokens(payload, clientTokenService.findClientTokensForPlatform(platform, groups));
         LOGGER.info("APNs push finished", payload);
     }
 

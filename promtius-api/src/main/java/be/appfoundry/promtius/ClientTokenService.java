@@ -13,17 +13,22 @@ import java.util.List;
  * @author Mike Seghers
  */
 public interface ClientTokenService<CT extends ClientToken<T, P>, T, P, G> {
+
     /**
-     * searches client tokens for a given platform.
+     * Searches client tokens for a given platform.
      */
-    List<CT> findClientTokensForOperatingSystem(P platform);
+    List<CT> findClientTokensForPlatform(P platform);
+
+    /**
+     * Searches client tokens for a given platform and groups.
+     */
+    List<CT> findClientTokensForPlatform(P platform, Collection<G> groups);
 
     /**
      * Unregister a client token.
      */
     void unregisterClientToken(CT clientToken);
 
-    List<CT> findClientTokensForOperatingSystem(P platform, Collection<G> groups);
 
     /**
      * Replace the existing token's token value with the given token value.
