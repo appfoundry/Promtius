@@ -1,6 +1,6 @@
 //Taken and adjusted from google example code
 /*
- * Copyright 2012 Google Inc.
+ * Copyright Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,9 +33,9 @@ public final class MulticastResult implements Serializable {
     private final List<Result> results;
     private final List<Long> retryMulticastIds;
 
-    static final class Builder {
+    public static final class Builder {
 
-        private final List<Result> results = new ArrayList<>();
+        private final List<Result> results = new ArrayList<Result>();
 
         // required parameters
         private final int success;
@@ -141,7 +141,7 @@ public final class MulticastResult implements Serializable {
                 .append("failure=").append(failure).append(",")
                 .append("canonical_ids=").append(canonicalIds).append(",");
         if (!results.isEmpty()) {
-            builder.append("results: ").append(results);
+            builder.append("results: " + results);
         }
         return builder.toString();
     }
