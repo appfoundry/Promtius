@@ -154,7 +154,7 @@ public final class Constants {
     /**
      * Time to Live value passed is less than zero or more than maximum.
      */
-    public static final String ERROR_INVALID_TTL= "InvalidTtl";
+    public static final String ERROR_INVALID_TTL = "InvalidTtl";
 
     /**
      * Token returned by GCM when a message was successfully sent.

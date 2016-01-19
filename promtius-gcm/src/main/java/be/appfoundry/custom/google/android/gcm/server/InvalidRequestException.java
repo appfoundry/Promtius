@@ -20,7 +20,7 @@ import java.io.IOException;
 
 /**
  * Exception thrown when GCM returned an error due to an invalid request.
- * <p>
+ * <p/>
  * This is equivalent to GCM posts that return an HTTP error different of 200.
  */
 public final class InvalidRequestException extends IOException {

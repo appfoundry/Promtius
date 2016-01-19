@@ -47,7 +47,6 @@ import static org.mockito.Mockito.when;
 
 /**
  * @author Mike Seghers
- * @author Filip Maelbrancke
  */
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleCloudMessagingPusherTest {

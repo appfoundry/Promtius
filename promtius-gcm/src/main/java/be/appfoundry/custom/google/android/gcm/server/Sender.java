@@ -104,21 +104,19 @@ public class Sender {
 
     /**
      * Sends a message to one device, retrying in case of unavailability.
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * <strong>Note: </strong> this method uses exponential back-off to retry in
      * case of service unavailability and hence could block the calling thread
      * for many seconds.
      *
      * @param message message to be sent, including the device's registration id.
-     * @param to registration token, notification key, or topic where the message will be sent.
+     * @param to      registration token, notification key, or topic where the message will be sent.
      * @param retries number of retries in case of service unavailability errors.
-     *
      * @return result of the request (see its javadoc for more details).
-     *
      * @throws IllegalArgumentException if to is {@literal null}.
-     * @throws InvalidRequestException if GCM didn't returned a 200 or 5xx status.
-     * @throws IOException if message could not be sent.
+     * @throws InvalidRequestException  if GCM didn't returned a 200 or 5xx status.
+     * @throws IOException              if message could not be sent.
      */
     public Result send(Message message, String to, int retries)
             throws IOException {
@@ -154,10 +152,9 @@ public class Sender {
      * {@link #send(Message, String, int)} for more info.
      *
      * @return result of the post, or {@literal null} if the GCM service was
-     *         unavailable or any network exception caused the request to fail,
-     *         or if the response contains more than one result.
-     *
-     * @throws InvalidRequestException if GCM didn't returned a 200 status.
+     * unavailable or any network exception caused the request to fail,
+     * or if the response contains more than one result.
+     * @throws InvalidRequestException  if GCM didn't returned a 200 status.
      * @throws IllegalArgumentException if to is {@literal null}.
      */
     public Result sendNoRetry(Message message, String to) throws IOException {
@@ -231,23 +228,21 @@ public class Sender {
 
     /**
      * Sends a message to many devices, retrying in case of unavailability.
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * <strong>Note: </strong> this method uses exponential back-off to retry in
      * case of service unavailability and hence could block the calling thread
      * for many seconds.
      *
      * @param message message to be sent.
-     * @param regIds registration id of the devices that will receive
-     *        the message.
+     * @param regIds  registration id of the devices that will receive
+     *                the message.
      * @param retries number of retries in case of service unavailability errors.
-     *
      * @return combined result of all requests made.
-     *
      * @throws IllegalArgumentException if registrationIds is {@literal null} or
-     *         empty.
-     * @throws InvalidRequestException if GCM didn't returned a 200 or 503 status.
-     * @throws IOException if message could not be sent.
+     *                                  empty.
+     * @throws InvalidRequestException  if GCM didn't returned a 200 or 503 status.
+     * @throws IOException              if message could not be sent.
      */
     public MulticastResult send(Message message, List<String> regIds, int retries)
             throws IOException {
@@ -269,7 +264,7 @@ public class Sender {
             }
             try {
                 multicastResult = sendNoRetry(message, unsentRegIds);
-            } catch(IOException e) {
+            } catch (IOException e) {
                 // no need for WARNING since exception might be already logged
                 logger.log(Level.FINEST, "IOException on attempt " + attempt, e);
             }
@@ -297,7 +292,7 @@ public class Sender {
                     + attempt + " attempts");
         }
         // calculate summary
-        int success = 0, failure = 0 , canonicalIds = 0;
+        int success = 0, failure = 0, canonicalIds = 0;
         for (Result result : results.values()) {
             if (result.getMessageId() != null) {
                 success++;
@@ -324,10 +319,9 @@ public class Sender {
      * Updates the status of the messages sent to devices and the list of devices
      * that should be retried.
      *
-     * @param unsentRegIds list of devices that are still pending an update.
-     * @param allResults map of status that will be updated.
+     * @param unsentRegIds    list of devices that are still pending an update.
+     * @param allResults      map of status that will be updated.
      * @param multicastResult result of the last multicast sent.
-     *
      * @return updated version of devices that should be retried.
      */
     private List<String> updateStatus(List<String> unsentRegIds,
@@ -357,12 +351,11 @@ public class Sender {
      * {@link #send(Message, List, int)} for more info.
      *
      * @return multicast results if the message was sent successfully,
-     *         {@literal null} if it failed but could be retried.
-     *
+     * {@literal null} if it failed but could be retried.
      * @throws IllegalArgumentException if registrationIds is {@literal null} or
-     *         empty.
-     * @throws InvalidRequestException if GCM didn't returned a 200 status.
-     * @throws IOException if there was a JSON parsing error
+     *                                  empty.
+     * @throws InvalidRequestException  if GCM didn't returned a 200 status.
+     * @throws IOException              if there was a JSON parsing error
      */
     public MulticastResult sendNoRetry(Message message,
                                        List<String> registrationIds) throws IOException {
@@ -438,7 +431,7 @@ public class Sender {
         }
         try {
             responseBody = getAndClose(conn.getInputStream());
-        } catch(IOException e) {
+        } catch (IOException e) {
             logger.log(Level.WARNING, "IOException reading response", e);
             return null;
         }
@@ -449,7 +442,7 @@ public class Sender {
     /**
      * Populate Map with message.
      *
-     * @param message Message used to populate Map.
+     * @param message    Message used to populate Map.
      * @param mapRequest Map populated by Message.
      */
     private void messageToMap(Message message, Map<Object, Object> mapRequest) {
@@ -547,17 +540,15 @@ public class Sender {
 
     /**
      * Makes an HTTP POST request to a given endpoint.
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * <strong>Note: </strong> the returned connected should not be disconnected,
      * otherwise it would kill persistent connections made using Keep-Alive.
      *
-     * @param url endpoint to post the request.
+     * @param url         endpoint to post the request.
      * @param contentType type of request.
-     * @param body body of the request.
-     *
+     * @param body        body of the request.
      * @return the underlying connection.
-     *
      * @throws IOException propagated from underlying methods.
      */
     protected HttpURLConnection post(String url, String contentType, String body)
@@ -600,7 +591,7 @@ public class Sender {
     /**
      * Creates a {@link StringBuilder} to be used as the body of an HTTP POST.
      *
-     * @param name initial parameter for the POST.
+     * @param name  initial parameter for the POST.
      * @param value initial value for that parameter.
      * @return StringBuilder to be used an HTTP POST body.
      */
@@ -611,8 +602,8 @@ public class Sender {
     /**
      * Adds a new parameter to the HTTP POST body.
      *
-     * @param body HTTP POST body.
-     * @param name parameter's name.
+     * @param body  HTTP POST body.
+     * @param name  parameter's name.
      * @param value parameter's value.
      */
     protected static void addParameter(StringBuilder body, String name,
@@ -630,9 +621,9 @@ public class Sender {
 
     /**
      * Convenience method to convert an InputStream to a String.
-     * <p>
+     * <p/>
      * If the stream ends in a newline character, it will be stripped.
-     * <p>
+     * <p/>
      * If the stream is {@literal null}, returns an empty string.
      */
     protected static String getString(InputStream stream) throws IOException {
