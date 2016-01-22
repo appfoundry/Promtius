@@ -1,6 +1,6 @@
 //Taken and adjusted from google example code
 /*
- * Copyright 2012 Google Inc.
+ * Copyright Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,15 +39,20 @@ import java.util.Map;
  *    .collapseKey(collapseKey)
  *    .timeToLive(3)
  *    .delayWhileIdle(true)
+ *    .dryRun(true)
+ *    .restrictedPackageName(restrictedPackageName)
  *    .build();
  * </pre></code>
  *
  * <strong>Message with optional attributes and payload data:</strong>
  * <pre><code>
  * Message message = new Message.Builder()
+ *    .priority("normal")
  *    .collapseKey(collapseKey)
  *    .timeToLive(3)
  *    .delayWhileIdle(true)
+ *    .dryRun(true)
+ *    .restrictedPackageName(restrictedPackageName)
  *    .addData("key1", "value1")
  *    .addData("key2", "value2")
  *    .build();
@@ -59,6 +64,14 @@ public final class Message implements Serializable {
     private final Boolean delayWhileIdle;
     private final Integer timeToLive;
     private final Map<String, Object> data;
+    private final Boolean dryRun;
+    private final String restrictedPackageName;
+    private final String priority;
+    private final Notification notification;
+
+    public enum Priority {
+        NORMAL, HIGH
+    }
 
     public static final class Builder {
 
@@ -68,6 +81,10 @@ public final class Message implements Serializable {
         private String collapseKey;
         private Boolean delayWhileIdle;
         private Integer timeToLive;
+        private Boolean dryRun;
+        private String restrictedPackageName;
+        private String priority;
+        private Notification notification;
 
         public Builder() {
             this.data = new LinkedHashMap<>();
@@ -116,6 +133,45 @@ public final class Message implements Serializable {
             return this;
         }
 
+        /**
+         * Sets the dryRun property (default value is {@literal false}).
+         */
+        public Builder dryRun(boolean value) {
+            dryRun = value;
+            return this;
+        }
+
+        /**
+         * Sets the restrictedPackageName property.
+         */
+        public Builder restrictedPackageName(String value) {
+            restrictedPackageName = value;
+            return this;
+        }
+
+        /**
+         * Sets the priority property.
+         */
+        public Builder priority(Priority value) {
+            switch(value) {
+                case NORMAL:
+                    priority = Constants.MESSAGE_PRIORITY_NORMAL;
+                    break;
+                case HIGH:
+                    priority = Constants.MESSAGE_PRIORITY_HIGH;
+                    break;
+            }
+            return this;
+        }
+
+        /**
+         * Sets the notification property.
+         */
+        public Builder notification(Notification value) {
+            notification = value;
+            return this;
+        }
+
         public Message build() {
             return new Message(this);
         }
@@ -127,6 +183,10 @@ public final class Message implements Serializable {
         delayWhileIdle = builder.delayWhileIdle;
         data = Collections.unmodifiableMap(builder.data);
         timeToLive = builder.timeToLive;
+        dryRun = builder.dryRun;
+        restrictedPackageName = builder.restrictedPackageName;
+        priority = builder.priority;
+        notification = builder.notification;
     }
 
     /**
@@ -151,15 +211,46 @@ public final class Message implements Serializable {
     }
 
     /**
+     * Gets the dryRun flag.
+     */
+    public Boolean isDryRun() {
+        return dryRun;
+    }
+
+    /**
+     * Gets the restricted package name.
+     */
+    public String getRestrictedPackageName() {
+        return restrictedPackageName;
+    }
+
+    /**
+     * Gets the message priority value.
+     */
+    public String getPriority() {
+        return priority;
+    }
+
+    /**
      * Gets the payload data, which is immutable.
      */
     public Map<String, Object> getData() {
         return data;
     }
 
+    /**
+     * Gets notification payload, which is immutable.
+     */
+    public Notification getNotification() {
+        return notification;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder("Message(");
+        if (priority != null) {
+            builder.append("priority=").append(priority).append(", ");
+        }
         if (collapseKey != null) {
             builder.append("collapseKey=").append(collapseKey).append(", ");
         }
@@ -169,11 +260,20 @@ public final class Message implements Serializable {
         if (delayWhileIdle != null) {
             builder.append("delayWhileIdle=").append(delayWhileIdle).append(", ");
         }
+        if (dryRun != null) {
+            builder.append("dryRun=").append(dryRun).append(", ");
+        }
+        if (restrictedPackageName != null) {
+            builder.append("restrictedPackageName=").append(restrictedPackageName).append(", ");
+        }
+        if (notification != null) {
+            builder.append("notification: ").append(notification).append(", ");
+        }
         if (!data.isEmpty()) {
             builder.append("data: {");
             for (Map.Entry<String, Object> entry : data.entrySet()) {
                 builder.append(entry.getKey()).append("=").append(entry.getValue())
-                       .append(",");
+                        .append(",");
             }
             builder.delete(builder.length() - 1, builder.length());
             builder.append("}");

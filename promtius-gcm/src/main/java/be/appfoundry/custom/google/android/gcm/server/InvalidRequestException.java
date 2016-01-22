@@ -1,6 +1,6 @@
 //Taken and adjusted from google example code
 /*
- * Copyright 2012 Google Inc.
+ * Copyright Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import java.io.IOException;
 
 /**
  * Exception thrown when GCM returned an error due to an invalid request.
- * <p>
+ * <p/>
  * This is equivalent to GCM posts that return an HTTP error different of 200.
  */
 public final class InvalidRequestException extends IOException {

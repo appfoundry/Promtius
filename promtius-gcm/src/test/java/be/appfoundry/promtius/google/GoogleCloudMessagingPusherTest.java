@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static be.appfoundry.custom.google.android.gcm.server.MulticastResultFactory.getMulticastResultBuilder;
-import static be.appfoundry.custom.google.android.gcm.server.MulticastResultFactory.getResult;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
@@ -203,7 +201,10 @@ public class GoogleCloudMessagingPusherTest {
     @Test
     public void test_multicastReturnEvaluated_cannonicalReplacement() throws Exception {
         List<ClientToken<String, String>> tokens = Collections.singletonList(tokenA);
-        List<Result> results = Collections.singletonList(getResult("newToken", "err", "1"));
+
+        Result.Builder resultBuilder = new Result.Builder().canonicalRegistrationId("newToken").errorCode("err").messageId("1");
+        List<Result> results = Collections.singletonList(resultBuilder.build());
+
         MulticastResult expected = getMulticastResultBuilder(50, 50, 20, 1, results);
 
         when(tokenA.getToken()).thenReturn("oldToken");
@@ -220,7 +221,9 @@ public class GoogleCloudMessagingPusherTest {
     @Test
     public void test_multicastReturnEvaluated_removal() throws Exception {
         List<ClientToken<String, String>> tokens = Collections.singletonList(tokenA);
-        List<Result> results = Collections.singletonList(getResult(null, Constants.ERROR_NOT_REGISTERED, null));
+
+        Result.Builder resultBuilder = new Result.Builder().canonicalRegistrationId(null).errorCode(Constants.ERROR_NOT_REGISTERED).messageId(null);
+        List<Result> results = Collections.singletonList(resultBuilder.build());
         MulticastResult expected = getMulticastResultBuilder(50, 50, 20, 1, results);
 
         when(tokenA.getToken()).thenReturn("oldToken");
@@ -238,5 +241,13 @@ public class GoogleCloudMessagingPusherTest {
     public void test_getPlatform() throws Exception {
         Set<String> singletonSet = ImmutableSet.of(TEST_PLATFORM);
         assertThat(pusher.getPlatforms(), is(singletonSet));
+    }
+
+    private MulticastResult getMulticastResultBuilder(int success, int failure, int canonicalIds, long multicastId, List<Result> results) {
+        MulticastResult.Builder builder = new MulticastResult.Builder(success, failure, canonicalIds, multicastId);
+        for (Result result : results) {
+            builder.addResult(result);
+        }
+        return builder.build();
     }
 }

@@ -6,7 +6,7 @@
 
     <groupId>be.appfoundry.promtius</groupId>
     <artifactId>promtius-parent</artifactId>
-    <version>2.1</version>
+    <version>2.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -27,7 +27,7 @@
         <developer>
             <id>maelbfi</id>
             <name>Filip Maelbrancke</name>
-            <email>filip.maelbrancke@ida-mediafoundry.be</email>
+            <email>filip.maelbrancke@appfoundry.be</email>
             <organization>AppFoundry</organization>
             <timezone>CET</timezone>
             <roles>
@@ -39,7 +39,7 @@
         <developer>
             <id>seghemi</id>
             <name>Mike Seghers</name>
-            <email>michael.seghers@ida-mediafoundry.be</email>
+            <email>michael.seghers@appfoundry.be</email>
             <organization>AppFoundry</organization>
             <timezone>CET</timezone>
             <roles>
