@@ -8,6 +8,7 @@ import be.appfoundry.promtius.ClientToken;
 import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
 import be.appfoundry.promtius.PushPayload;
+import be.appfoundry.promtius.PushPayload.PushPriority;
 import be.appfoundry.promtius.exception.PushFailedException;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
@@ -29,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static be.appfoundry.promtius.PushPayload.PushPriority.HIGH;
+import static be.appfoundry.promtius.PushPayload.PushPriority.NORMAL;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
@@ -166,6 +169,45 @@ public class GoogleCloudMessagingPusherTest {
         verify(wrapper).send(messageCaptor.capture(), anyListOf(String.class), any(Integer.class));
         Message message = messageCaptor.getValue();
         assertThat(message.getCollapseKey(), is(equalTo(PushPayload.DEFAULT_DISCRIMINATOR_VALUE)));
+    }
+
+    @Test
+    public void test_sendPush_defaultPriority_shouldSetNormalGcmPriority() throws Exception {
+        final List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        PushPayload payload = new PushPayload.Builder().withMessage("message").build();
+        pusher.sendPush(payload);
+
+        ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
+        verify(wrapper).send(messageArgumentCaptor.capture(), anyListOf(String.class), any(Integer.class));
+        Message message = messageArgumentCaptor.getValue();
+        assertThat(message.getPriority(), is("normal"));
+    }
+
+    @Test
+    public void test_sendPush_normalPriority_shouldSetNormalGcmPriority() throws Exception {
+        final List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        PushPayload payload = new PushPayload.Builder().withMessage("message").withPushPriority(NORMAL).build();
+        pusher.sendPush(payload);
+
+        ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
+        verify(wrapper).send(messageArgumentCaptor.capture(), anyListOf(String.class), any(Integer.class));
+        Message message = messageArgumentCaptor.getValue();
+        assertThat(message.getPriority(), is("normal"));
+    }
+
+    @Test
+    public void test_sendPush_highPriority_shouldSetHighGcmPriority() throws Exception {
+        final List<ClientToken<String, String>> tokens = Arrays.asList(tokenA, tokenB);
+        when(clientTokenService.findClientTokensForOperatingSystem(TEST_PLATFORM)).thenReturn(tokens);
+        PushPayload payload = new PushPayload.Builder().withMessage("message").withPushPriority(HIGH).build();
+        pusher.sendPush(payload);
+
+        ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
+        verify(wrapper).send(messageArgumentCaptor.capture(), anyListOf(String.class), any(Integer.class));
+        Message message = messageArgumentCaptor.getValue();
+        assertThat(message.getPriority(), is("high"));
     }
 
     @Test(expected = PushFailedException.class)

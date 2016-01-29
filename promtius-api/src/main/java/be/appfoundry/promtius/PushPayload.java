@@ -12,18 +12,22 @@ public class PushPayload {
 
     public static final String DEFAULT_SOUND_VALUE = "default";
     public static final String DEFAULT_DISCRIMINATOR_VALUE = "discriminator";
+    public static final PushPriority DEFAULT_PUSHPRIORITY_VALUE = PushPriority.NORMAL;
     private String message;
     private String sound;
     private String discriminator;
     private Optional<Map<String, ?>> customFields;
     private Optional<Integer> timeToLive;
+    private PushPriority pushPriority;
 
     /**
-     * @deprecated use the {@link be.appfoundry.promtius.PushPayload.Builder} to create new instances instead!
+     * Push priority.
+     * GCM documentation => https://developers.google.com/cloud-messaging/http-server-ref
+     * APNS documentation => https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Appendixes/BinaryProviderAPI.html#//apple_ref/doc/uid/TP40008194-CH106-SW5
      */
-    @Deprecated
-    public PushPayload(final String message) {
-        this.message = message;
+    public enum PushPriority {
+        NORMAL,
+        HIGH
     }
 
     private PushPayload() {
@@ -64,12 +68,20 @@ public class PushPayload {
         return discriminator;
     }
 
+    /**
+     * The priority to be used for this message by the providers.
+     */
+    public PushPriority getPushPriority() {
+        return pushPriority;
+    }
+
     public static class Builder {
         private String message;
         private Optional<String> sound = Optional.absent();
         private Optional<Integer> timeToLive = Optional.absent();
         private Optional<Map<String, ?>> customFields = Optional.absent();
         private Optional<String> discriminator = Optional.absent();
+        private Optional<PushPriority> pushPriority = Optional.absent();
 
         public Builder withMessage(final String message) {
             this.message = message;
@@ -97,6 +109,11 @@ public class PushPayload {
             return this;
         }
 
+        public Builder withPushPriority(final PushPriority pushPriority) {
+            this.pushPriority = Optional.of(pushPriority);
+            return this;
+        }
+
         public PushPayload build() {
             Preconditions.checkState(message != null);
             PushPayload pushPayload = new PushPayload();
@@ -105,6 +122,7 @@ public class PushPayload {
             pushPayload.timeToLive = this.timeToLive;
             pushPayload.customFields = this.customFields;
             pushPayload.discriminator = this.discriminator.or(DEFAULT_DISCRIMINATOR_VALUE);
+            pushPayload.pushPriority = this.pushPriority.or(DEFAULT_PUSHPRIORITY_VALUE);
             return pushPayload;
         }
     }

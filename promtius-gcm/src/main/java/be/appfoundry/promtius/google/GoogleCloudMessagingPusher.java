@@ -2,12 +2,14 @@ package be.appfoundry.promtius.google;
 
 import be.appfoundry.custom.google.android.gcm.server.Constants;
 import be.appfoundry.custom.google.android.gcm.server.Message;
+import be.appfoundry.custom.google.android.gcm.server.Message.Priority;
 import be.appfoundry.custom.google.android.gcm.server.MulticastResult;
 import be.appfoundry.custom.google.android.gcm.server.Result;
 import be.appfoundry.promtius.ClientToken;
 import be.appfoundry.promtius.ClientTokenFactory;
 import be.appfoundry.promtius.ClientTokenService;
 import be.appfoundry.promtius.PushPayload;
+import be.appfoundry.promtius.PushPayload.PushPriority;
 import be.appfoundry.promtius.Pusher;
 import be.appfoundry.promtius.exception.PushFailedException;
 import com.google.common.collect.ImmutableList;
@@ -62,7 +64,8 @@ public final class GoogleCloudMessagingPusher<CT extends ClientToken<String, P>,
     }
 
     private void pushPayloadToClientsIdentifiedByTokens(final PushPayload payload, final List<CT> tokens) {
-        Message.Builder builder = new Message.Builder().addData("message", payload.getMessage()).addData("sound", payload.getSound()).collapseKey(payload.getDiscriminator());
+        final Priority gcmPriority = (payload.getPushPriority().equals(PushPriority.NORMAL)) ? Priority.NORMAL : Priority.HIGH;
+        Message.Builder builder = new Message.Builder().addData("message", payload.getMessage()).addData("sound", payload.getSound()).collapseKey(payload.getDiscriminator()).priority(gcmPriority);
         if (payload.getCustomFields().isPresent()) {
             Map<String, ?> customFields = payload.getCustomFields().get();
             builder.addData("data", customFields);

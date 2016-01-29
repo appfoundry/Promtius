@@ -81,4 +81,15 @@ public class PushPayloadTest {
     public void testCanBuildWithoutDiscriminator() throws Exception {
         assertThat(payload.getDiscriminator(), is(equalTo(PushPayload.DEFAULT_DISCRIMINATOR_VALUE)));
     }
+
+    @Test
+    public void testCanBuildWithPushPriority() throws Exception {
+        payload = validBuilder.withPushPriority(PushPayload.PushPriority.HIGH).build();
+        assertThat(payload.getPushPriority(), is(PushPayload.PushPriority.HIGH));
+    }
+
+    @Test
+    public void testCanBuildWithoutPushPriority() throws Exception {
+        assertThat(payload.getPushPriority(), is(PushPayload.PushPriority.NORMAL));
+    }
 }
