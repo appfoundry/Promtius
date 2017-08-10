@@ -6,12 +6,12 @@
 
     <groupId>be.appfoundry.promtius</groupId>
     <artifactId>promtius-parent</artifactId>
-    <version>3.0</version>
+    <version>3.1</version>
     <packaging>pom</packaging>
 
     <properties>
         <guava.version>16.0.1</guava.version>
-        <apns.version>0.2.3</apns.version>
+        <apns.version>1.0.0.Beta6</apns.version>
         <slf4j.version>1.7.6</slf4j.version>
         <junit.version>4.11</junit.version>
         <mockito.version>1.9.5</mockito.version>
